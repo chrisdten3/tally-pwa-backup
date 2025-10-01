@@ -5,161 +5,36 @@
       "name": "MSB Tech Center",
       "email": "techcenter@georgetown.edu",
       "description": "",
-      "createdAt": "2025-09-22T17:47:16.297Z"
-    },
-    {
-      "id": "club_hoyakytics",
-      "name": "Hoyakytics",
-      "email": "hoyalytics_ug@georgetown.com",
-      "description": "",
-      "createdAt": "2025-09-22T18:15:00.388Z"
-    },
-    {
-      "id": "club_msbtc",
-      "name": "MSBTC",
-      "email": "spp70@georgetown.edu",
-      "description": "McDonough School of Business Technology Center",
-      "createdAt": "2025-09-22T19:06:31.373Z"
-    },
-    {
-      "id": "club_clubsoccer",
-      "name": "Club Soccer",
-      "email": "clubsoccer@georgetown.exu",
-      "description": "",
-      "createdAt": "2025-09-22T19:07:13.153Z"
-    },
-    {
-      "id": "club_gv",
-      "name": "GV",
-      "email": "gv@georgetown.esu",
-      "description": "We are gay",
-      "createdAt": "2025-09-22T21:06:12.781Z"
-    },
-    {
-      "id": "club_hoyalytics",
-      "name": "Hoyalytics",
-      "email": "h@georgetown.edu",
-      "description": "We are not gay",
-      "createdAt": "2025-09-22T21:06:45.489Z"
-    },
-    {
-      "id": "club_clubbaseball",
-      "name": "Club Baseball",
-      "email": "cb@georgetown.edu",
-      "description": "",
-      "createdAt": "2025-09-24T18:14:22.338Z"
-    },
-    {
-      "id": "club_clublacrosse",
-      "name": "Club Lacrosse",
-      "email": "clublax@georgetown.edu",
-      "description": "",
-      "createdAt": "2025-09-24T18:23:31.824Z"
-    },
-    {
-      "id": "club_rowing",
-      "name": "Rowing",
-      "email": "rowers@georgetown.edu",
-      "description": "",
-      "createdAt": "2025-09-24T19:29:59.514Z"
+      "createdAt": "2025-10-01T20:41:21.958Z"
     }
   ],
   "memberships": {
-    "user_testadminguiacom": [
-      "club_msbtechcenter",
-      "club_hoyakytics"
-    ],
-    "user_spp72georgetownesu": [
-      "club_msbtc",
-      "club_clubsoccer"
-    ],
-    "user_mdj82georgetownedu": [
-      "club_gv",
-      "club_hoyalytics"
-    ],
-    "user_testdevguiacom": [
-      "club_clubbaseball"
-    ],
-    "user_spp72georgetownedu": [
-      "club_msbtechcenter"
-    ],
-    "user_testusergmailcom": [
-      "club_clublacrosse"
-    ],
-    "user_cdt50georgetownedu": [
-      "club_hoyalytics"
-    ],
-    "user_testgmailcom": {
-      "club_rowing": "admin"
-    }
-  },
-  "users": {
-    "spp72@georgetown.esu": {
-      "id": "user_spp72georgetownesu",
-      "firstName": "Sophia",
-      "lastName": "Pezeshkan",
-      "name": "Sophia Pezeshkan",
-      "email": "spp72@georgetown.esu"
-    },
-    "mdj82@georgetown.edu": {
-      "id": "user_mdj82georgetownedu",
-      "firstName": "Matthew",
-      "lastName": "Jordan",
-      "name": "Matthew Jordan",
-      "email": "mdj82@georgetown.edu"
-    },
-    "cdt50@georgetown.edu": {
-      "id": "user_cdt50georgetownedu",
-      "firstName": "Chris",
-      "lastName": "Tengey",
-      "name": "Chris Tengey",
-      "email": "cdt50@georgetown.edu"
+    "user_cdt50georgetownedu": {
+      "club_msbtechcenter": "admin"
     }
   },
   "club_events": [
     {
-      "id": "event_rowerformal_1758742973612",
-      "author_id": "user_testgmailcom",
-      "club_id": "club_rowing",
-      "title": "Rower Formal",
-      "description": "Pay me all the money",
-      "amount": 30,
-      "createdAt": "2025-09-24T19:42:53.610Z",
-      "expires_at": "2025-09-30T00:00:00.000Z"
-    },
-    {
-      "id": "event_rowerformal_1758743071137",
-      "author_id": "user_testgmailcom",
-      "club_id": "club_rowing",
-      "title": "Rower Formal",
-      "description": "Pay me all the money",
-      "amount": 30,
-      "createdAt": "2025-09-24T19:44:31.137Z",
-      "expires_at": "2025-09-27T00:00:00.000Z"
+      "id": "event_boozecruise_1759351726957",
+      "author_id": "user_cdt50georgetownedu",
+      "club_id": "club_msbtechcenter",
+      "title": "Booze Cruise",
+      "description": "",
+      "amount": 50,
+      "createdAt": "2025-10-01T20:48:46.957Z",
+      "expires_at": "2025-10-02T00:00:00.000Z"
     }
   ],
   "club_event_assignees": [
     {
-      "id": "assign_1758742973612_884hue",
-      "club_event_id": "event_rowerformal_1758742973612",
-      "club_id": "club_rowing",
-      "user_id": "user_testgmailcom",
-      "assigned_amount": 30,
+      "id": "assign_1759351726957_oswodp",
+      "club_event_id": "event_boozecruise_1759351726957",
+      "club_id": "club_msbtechcenter",
+      "user_id": "user_cdt50georgetownedu",
+      "assigned_amount": 50,
       "role_at_assign": "admin",
-      "assigned_by": "user_testgmailcom",
-      "assigned_at": "2025-09-24T19:42:53.610Z",
-      "is_waived": false,
-      "is_cancelled": false
-    },
-    {
-      "id": "assign_1758743071137_jkzo2k",
-      "club_event_id": "event_rowerformal_1758743071137",
-      "club_id": "club_rowing",
-      "user_id": "user_testgmailcom",
-      "assigned_amount": 30,
-      "role_at_assign": "admin",
-      "assigned_by": "user_testgmailcom",
-      "assigned_at": "2025-09-24T19:44:31.137Z",
+      "assigned_by": "user_cdt50georgetownedu",
+      "assigned_at": "2025-10-01T20:48:46.957Z",
       "is_waived": false,
       "is_cancelled": false
     }
