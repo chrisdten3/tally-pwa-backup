@@ -4,11 +4,20 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { CalendarDays, Plus, X, Clock, AlertCircle, CheckCircle, Users } from "lucide-react";
 import EventPayButton from "@/components/EventPayButton";
-import { PayPalScriptProvider } from "@paypal/react-paypal-js";
+import { PayPalScriptProvider, type ReactPayPalScriptOptions } from "@paypal/react-paypal-js";
 
 type Club = { id: string; name: string };
 type Member = { id: string; name: string; email: string; role: "admin" | "member" };
 const PAYPAL_CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID ?? "";
+
+const options: ReactPayPalScriptOptions = {
+  clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID!, // must exist at build
+  components: "buttons,funding-eligibility",
+  currency: "USD",
+  buyerCountry: "US",
+  enableFunding: "venmo",
+  "data-sdk-integration-source": "integrationbuilder_sc"
+};
 
 type AssignedEvent = {
   id: string;
@@ -259,9 +268,7 @@ export default function EventsPage() {
 
   return (
     <PayPalScriptProvider
-      options={{
-        "clientId": PAYPAL_CLIENT_ID,
-      }}
+      options={options}
     >
     <main className="min-h-screen p-4 pb-20">
       <div className="max-w-4xl mx-auto">

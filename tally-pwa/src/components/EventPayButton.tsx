@@ -1,62 +1,53 @@
 // components/EventPayButton.tsx
 "use client";
-import { useEffect, useRef } from "react";
-import Script from "next/script";
+import { PayPalButtons } from "@paypal/react-paypal-js";
 
-type Props = {
-  eventId: string;
-  authToken: string; // "mock-token-<email>"
-};
+type Props = { eventId: string; authToken: string };
 
 export default function EventPayButton({ eventId, authToken }: Props) {
-  const btnRef = useRef<HTMLDivElement>(null);
-
-  // Render buttons after SDK loads
-  useEffect(() => {
-    const w = window as any;
-    if (!w.paypal || !btnRef.current) return;
-    const buttons = w.paypal.Buttons({
-      createOrder: async () => {
-        const r = await fetch("/api/paypal/create-order", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${authToken}`,
-          },
-          body: JSON.stringify({ eventId }),
-        });
-        const j = await r.json();
-        if (!r.ok) throw new Error(j.error || "create-order failed");
-        return j.id;
+  const createOrder = async () => {
+    const r = await fetch("/api/paypal/create-order", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${authToken}`,
       },
-      onApprove: async (data: any) => {
-        const r = await fetch("/api/paypal/capture-order", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ orderId: data.orderID }),
-        });
-        const capture = await r.json();
-        if (!r.ok) throw new Error(capture.error || "capture failed");
-        // TODO: toast success + refresh events
-      },
-      onError: (err: any) => {
-        console.error(err);
-        // TODO: toast error
-      },
-      style: { shape: "pill", layout: "horizontal" },
+      body: JSON.stringify({ eventId }),
     });
-    buttons.render(btnRef.current);
-    return () => buttons.close();
-  }, [eventId, authToken]);
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || "create-order failed");
+    return j.id; // orderID
+  };
+
+  const onApprove = async (data: any) => {
+    const r = await fetch("/api/paypal/capture-order", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ orderId: data.orderID }),
+    });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || "capture failed");
+    // TODO: toast + refresh events
+  };
 
   return (
-    <>
-      {/* Load SDK once at app root ideally; including here for portability */}
-      <Script
-        src={`https://www.paypal.com/sdk/js?client-id=${process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID}&components=buttons&currency=USD&intent=CAPTURE`}
-        strategy="afterInteractive"
+    <div className="flex gap-2">
+      {/* Standard PayPal button(s) */}
+      <PayPalButtons
+        style={{ layout: "horizontal", shape: "pill" }}
+        createOrder={createOrder}
+        onApprove={onApprove}
+        onError={(e) => console.error(e)}
       />
-      <div ref={btnRef} />
-    </>
+
+      {/* Venmo-only button — renders only if eligible */}
+      <PayPalButtons
+        fundingSource="venmo"
+        style={{ layout: "horizontal", shape: "pill" }}
+        createOrder={createOrder}
+        onApprove={onApprove}
+        onError={(e) => console.error(e)}
+      />
+    </div>
   );
 }

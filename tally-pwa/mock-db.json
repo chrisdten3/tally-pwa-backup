@@ -1,40 +1,96 @@
 {
+  "users": {
+    "testuser@gmail.com": {
+      "id": "user_testusergmailcom",
+      "firstName": "Test",
+      "lastName": "User",
+      "name": "Test User",
+      "email": "testuser@gmail.com"
+    },
+    "sophiapezeshkan@gmail.com": {
+      "id": "user_sophiapezeshkangmailcom",
+      "firstName": "Sophia",
+      "lastName": "Pezeshkan",
+      "name": "Sophia Pezeshkan",
+      "email": "sophiapezeshkan@gmail.com"
+    }
+  },
   "clubs": [
     {
-      "id": "club_msbtechcenter",
-      "name": "MSB Tech Center",
-      "email": "techcenter@georgetown.edu",
+      "id": "club_testclub",
+      "name": "Test Club",
+      "email": "testclub@georgetown.edu",
       "description": "",
-      "createdAt": "2025-10-01T20:41:21.958Z"
+      "createdAt": "2025-10-02T16:46:46.309Z"
+    },
+    {
+      "id": "club_msbtechcenter",
+      "name": "msb tech center",
+      "email": "sophiapezeshkan@gmail.com",
+      "description": "",
+      "createdAt": "2025-10-02T17:51:11.764Z"
+    },
+    {
+      "id": "club_clublacrosse",
+      "name": "Club Lacrosse",
+      "email": "clublax@georgetown.edu",
+      "description": "",
+      "createdAt": "2025-10-02T17:56:02.688Z"
     }
   ],
   "memberships": {
-    "user_cdt50georgetownedu": {
+    "user_testusergmailcom": {
+      "club_testclub": "admin",
+      "club_clublacrosse": "admin"
+    },
+    "user_sophiapezeshkangmailcom": {
       "club_msbtechcenter": "admin"
     }
   },
   "club_events": [
     {
-      "id": "event_boozecruise_1759351726957",
-      "author_id": "user_cdt50georgetownedu",
-      "club_id": "club_msbtechcenter",
-      "title": "Booze Cruise",
+      "id": "event_testevent_1759423678616",
+      "author_id": "user_testusergmailcom",
+      "club_id": "club_testclub",
+      "title": "Test Event",
       "description": "",
-      "amount": 50,
-      "createdAt": "2025-10-01T20:48:46.957Z",
-      "expires_at": "2025-10-02T00:00:00.000Z"
+      "amount": 30,
+      "createdAt": "2025-10-02T16:47:58.616Z",
+      "expires_at": "2026-10-05T00:00:00.000Z"
+    },
+    {
+      "id": "event_dues_1759427522880",
+      "author_id": "user_sophiapezeshkangmailcom",
+      "club_id": "club_msbtechcenter",
+      "title": "dues ",
+      "description": "",
+      "amount": 30,
+      "createdAt": "2025-10-02T17:52:02.879Z",
+      "expires_at": "2025-10-15T00:00:00.000Z"
     }
   ],
   "club_event_assignees": [
     {
-      "id": "assign_1759351726957_oswodp",
-      "club_event_id": "event_boozecruise_1759351726957",
-      "club_id": "club_msbtechcenter",
-      "user_id": "user_cdt50georgetownedu",
-      "assigned_amount": 50,
+      "id": "assign_1759423678616_gypopa",
+      "club_event_id": "event_testevent_1759423678616",
+      "club_id": "club_testclub",
+      "user_id": "user_testusergmailcom",
+      "assigned_amount": 30,
       "role_at_assign": "admin",
-      "assigned_by": "user_cdt50georgetownedu",
-      "assigned_at": "2025-10-01T20:48:46.957Z",
+      "assigned_by": "user_testusergmailcom",
+      "assigned_at": "2025-10-02T16:47:58.616Z",
+      "is_waived": false,
+      "is_cancelled": false
+    },
+    {
+      "id": "assign_1759427522880_ucfd4m",
+      "club_event_id": "event_dues_1759427522880",
+      "club_id": "club_msbtechcenter",
+      "user_id": "user_sophiapezeshkangmailcom",
+      "assigned_amount": 30,
+      "role_at_assign": "admin",
+      "assigned_by": "user_sophiapezeshkangmailcom",
+      "assigned_at": "2025-10-02T17:52:02.879Z",
       "is_waived": false,
       "is_cancelled": false
     }
