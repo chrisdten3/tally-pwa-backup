@@ -2,12 +2,14 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { CalendarDays, Plus, X, Clock, AlertCircle, CheckCircle, Users, CreditCard, DollarSign } from "lucide-react";
-import PaymentModal from "@/components/PaymentModal";
+import {
+  CalendarDays, Plus, X, Clock, AlertCircle, CheckCircle, Users,
+} from "lucide-react";
+import { PayPalScriptProvider, type ReactPayPalScriptOptions } from "@paypal/react-paypal-js";
+import PayChoiceModal from "@/components/PayChoiceModal";
 
 type Club = { id: string; name: string };
 type Member = { id: string; name: string; email: string; role: "admin" | "member" };
-const PAYPAL_CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID ?? "";
 
 const options: ReactPayPalScriptOptions = {
   clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID!, // must exist at build
@@ -44,15 +46,15 @@ type CreatedEvent = {
   createdAt: string;
   expires_at: string | null;
   club: { id: string; name: string };
-  stats: {
-    assigneeCount: number;
-    cancelledCount: number;
-    waivedCount: number;
-  };
+  stats: { assigneeCount: number; cancelledCount: number; waivedCount: number };
 };
 
 export default function EventsPage() {
   const [showModal, setShowModal] = useState(false);
+
+  // NEW: state for the pay-choice sheet
+  const [activePayEvent, setActivePayEvent] = useState<AssignedEvent | null>(null);
+
   const [clubs, setClubs] = useState<Club[]>([]);
   const [selectedClubId, setSelectedClubId] = useState("");
   const [members, setMembers] = useState<Member[]>([]);
@@ -70,12 +72,11 @@ export default function EventsPage() {
   const [createdEvents, setCreatedEvents] = useState<CreatedEvent[]>([]);
   const [eventsLoading, setEventsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<"assigned" | "created">("assigned");
-  const [selectedEvent, setSelectedEvent] = useState<AssignedEvent | null>(null);
 
-  // Prefer real token; fallback to a dev/mock so EventPayButton isn't undefined
+  // Prefer real token; fallback to a dev/mock
   const token =
     (typeof window !== "undefined" && localStorage.getItem("token")) ||
-    process.env.NEXT_PUBLIC_DEV_AUTH_TOKEN || // optional: define for local dev
+    process.env.NEXT_PUBLIC_DEV_AUTH_TOKEN ||
     "mock-token-maggie.xinheshen@gmail.com";
 
   // Fetch events on mount
@@ -236,7 +237,7 @@ export default function EventsPage() {
     }
   };
 
-  // Group assigned events by status + sort within each group
+  // Group + sort assigned events
   const groupedAssignedEvents = useMemo(() => {
     const groups = {
       overdue: [] as AssignedEvent[],
@@ -262,325 +263,271 @@ export default function EventsPage() {
     groups["due-soon"].sort(byNearestDue);
     groups.active.sort(byNearestDue);
     groups["no-due-date"].sort(byCreatedDesc);
-
     return groups;
   }, [assignedEvents]);
 
   return (
-    <>
-    <main className="min-h-screen p-4 pb-20">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-semibold">Events</h1>
-            <p className="text-sm text-zinc-500">Manage your assigned and created events</p>
+    <PayPalScriptProvider options={options}>
+      <main className="min-h-screen p-4 pb-20">
+        <div className="max-w-4xl mx-auto">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-2xl font-semibold">Events</h1>
+              <p className="text-sm text-zinc-500">Manage your assigned and created events</p>
+            </div>
+            <button
+              onClick={() => setShowModal(true)}
+              className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 text-white px-4 py-2 text-sm hover:bg-indigo-500"
+            >
+              <Plus size={16} /> New Event
+            </button>
           </div>
-          <button
-            onClick={() => setShowModal(true)}
-            className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 text-white px-4 py-2 text-sm hover:bg-indigo-500"
-          >
-            <Plus size={16} /> New Event
-          </button>
-        </div>
 
-        {/* Tabs */}
-        <div className="flex gap-1 mb-6 bg-zinc-100 dark:bg-zinc-800 p-1 rounded-lg">
-          <button
-            onClick={() => setActiveTab("assigned")}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-              activeTab === "assigned"
-                ? "bg-white dark:bg-zinc-700 text-indigo-600 shadow-sm"
-                : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"
-            }`}
-          >
-            Assigned to you ({assignedEvents.length})
-          </button>
-          <button
-            onClick={() => setActiveTab("created")}
-            className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-              activeTab === "created"
-                ? "bg-white dark:bg-zinc-700 text-indigo-600 shadow-sm"
-                : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"
-            }`}
-          >
-            Created by you ({createdEvents.length})
-          </button>
-        </div>
-
-        {/* Content */}
-        {eventsLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="text-sm text-zinc-500">Loading events...</div>
+          {/* Tabs */}
+          <div className="flex gap-1 mb-6 bg-zinc-100 dark:bg-zinc-800 p-1 rounded-lg">
+            <button
+              onClick={() => setActiveTab("assigned")}
+              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                activeTab === "assigned"
+                  ? "bg-white dark:bg-zinc-700 text-indigo-600 shadow-sm"
+                  : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"
+              }`}
+            >
+              Assigned to you ({assignedEvents.length})
+            </button>
+            <button
+              onClick={() => setActiveTab("created")}
+              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                activeTab === "created"
+                  ? "bg-white dark:bg-zinc-700 text-indigo-600 shadow-sm"
+                  : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200"
+              }`}
+            >
+              Created by you ({createdEvents.length})
+            </button>
           </div>
-        ) : activeTab === "assigned" ? (
-          <div className="space-y-6">
-            {assignedEvents.length === 0 ? (
-              <div className="text-center py-12">
-                <CalendarDays size={48} className="mx-auto text-zinc-400 mb-4" />
-                <h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100 mb-2">No events assigned to you</h3>
-                <p className="text-sm text-zinc-500 mb-4">Nothing assigned to you across your clubs.</p>
-                <button
-                  onClick={() => setShowModal(true)}
-                  className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 text-white px-4 py-2 text-sm hover:bg-indigo-500"
-                >
-                  <Plus size={16} /> Create Event
-                </button>
-              </div>
-            ) : (
-              <>
-                {/* Overdue */}
-                {groupedAssignedEvents.overdue.length > 0 && (
-                  <div>
-                    <h3 className="flex items-center gap-2 text-sm font-medium text-red-600 mb-3">
-                      <AlertCircle size={16} />
-                      Overdue ({groupedAssignedEvents.overdue.length})
-                    </h3>
-                    <div className="space-y-3">
-                      {groupedAssignedEvents.overdue.map((event) => (
-                        <div
-                          key={event.id}
-                          className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 cursor-pointer hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
-                          onClick={() => setSelectedEvent(event)}
-                        >
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="flex-1">
-                              <h4 className="font-medium text-red-900 dark:text-red-100">{event.title}</h4>
-                              <p className="text-sm text-red-700 dark:text-red-300">{event.club.name}</p>
-                              <p className="text-sm text-red-600 dark:text-red-400 mt-1">
-                                Due {formatDate(event.expires_at!)} • {formatCurrency(event.amount)}
-                              </p>
-                              <p className="text-xs text-red-500 dark:text-red-400 mt-1">
-                                Assigned by {event.assignment.assigned_by_name} on{" "}
-                                {formatDate(event.assignment.assigned_at)}
-                              </p>
-                            </div>
-                            <div className="flex items-center gap-2">
+
+          {/* Content */}
+          {eventsLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-sm text-zinc-500">Loading events...</div>
+            </div>
+          ) : activeTab === "assigned" ? (
+            <div className="space-y-6">
+              {assignedEvents.length === 0 ? (
+                <div className="text-center py-12">
+                  <CalendarDays size={48} className="mx-auto text-zinc-400 mb-4" />
+                  <h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100 mb-2">No events assigned to you</h3>
+                  <p className="text-sm text-zinc-500 mb-4">Nothing assigned to you across your clubs.</p>
+                  <button
+                    onClick={() => setShowModal(true)}
+                    className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 text-white px-4 py-2 text-sm hover:bg-indigo-500"
+                  >
+                    <Plus size={16} /> Create Event
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {/* Overdue */}
+                  {groupedAssignedEvents.overdue.length > 0 && (
+                    <div>
+                      <h3 className="flex items-center gap-2 text-sm font-medium text-red-600 mb-3">
+                        <AlertCircle size={16} />
+                        Overdue ({groupedAssignedEvents.overdue.length})
+                      </h3>
+                      <div className="space-y-3">
+                        {groupedAssignedEvents.overdue.map((event) => (
+                          <button
+                            key={event.id}
+                            onClick={() => setActivePayEvent(event)}
+                            className="w-full text-left bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 hover:bg-red-100/80 dark:hover:bg-red-900/30 transition"
+                          >
+                            <div className="flex items-start justify-between gap-4">
+                              <div className="flex-1">
+                                <h4 className="font-medium text-red-900 dark:text-red-100">{event.title}</h4>
+                                <p className="text-sm text-red-700 dark:text-red-300">{event.club.name}</p>
+                                <p className="text-sm text-red-600 dark:text-red-400 mt-1">
+                                  Due {formatDate(event.expires_at!)} • ${event.amount.toFixed(2)}
+                                </p>
+                                <p className="text-xs text-red-500 dark:text-red-400 mt-1">
+                                  Assigned by {event.assignment.assigned_by_name} on {formatDate(event.assignment.assigned_at)}
+                                </p>
+                              </div>
                               <span className="px-2 py-1 bg-red-100 dark:bg-red-800 text-red-800 dark:text-red-200 text-xs rounded-full">
                                 Overdue
                               </span>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelectedEvent(event);
-                                }}
-                                className="inline-flex items-center gap-1 rounded-lg bg-indigo-600 text-white px-3 py-1.5 text-sm hover:bg-indigo-500"
-                              >
-                                <DollarSign size={14} />
-                                <span>Pay Now</span>
-                              </button>
                             </div>
-                          </div>
-                        </div>
-                      ))}
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {/* Due Soon */}
-                {groupedAssignedEvents["due-soon"].length > 0 && (
-                  <div>
-                    <h3 className="flex items-center gap-2 text-sm font-medium text-orange-600 mb-3">
-                      <Clock size={16} />
-                      Due Soon ({groupedAssignedEvents["due-soon"].length})
-                    </h3>
-                    <div className="space-y-3">
-                      {groupedAssignedEvents["due-soon"].map((event) => (
-                        <div
-                          key={event.id}
-                          className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4 cursor-pointer hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors"
-                          onClick={() => setSelectedEvent(event)}
-                        >
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="flex-1">
-                              <h4 className="font-medium text-orange-900 dark:text-orange-100">{event.title}</h4>
-                              <p className="text-sm text-orange-700 dark:text-orange-300">{event.club.name}</p>
-                              <p className="text-sm text-orange-600 dark:text-orange-400 mt-1">
-                                Due {formatDate(event.expires_at!)} • {formatCurrency(event.amount)}
-                              </p>
-                              <p className="text-xs text-orange-500 dark:text-orange-400 mt-1">
-                                Assigned by {event.assignment.assigned_by_name} on{" "}
-                                {formatDate(event.assignment.assigned_at)}
-                              </p>
-                            </div>
-                            <div className="flex items-center gap-2">
+                  {/* Due Soon */}
+                  {groupedAssignedEvents["due-soon"].length > 0 && (
+                    <div>
+                      <h3 className="flex items-center gap-2 text-sm font-medium text-orange-600 mb-3">
+                        <Clock size={16} />
+                        Due Soon ({groupedAssignedEvents["due-soon"].length})
+                      </h3>
+                      <div className="space-y-3">
+                        {groupedAssignedEvents["due-soon"].map((event) => (
+                          <button
+                            key={event.id}
+                            onClick={() => setActivePayEvent(event)}
+                            className="w-full text-left bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4 hover:bg-orange-100/80 dark:hover:bg-orange-900/30 transition"
+                          >
+                            <div className="flex items-start justify-between gap-4">
+                              <div className="flex-1">
+                                <h4 className="font-medium text-orange-900 dark:text-orange-100">{event.title}</h4>
+                                <p className="text-sm text-orange-700 dark:text-orange-300">{event.club.name}</p>
+                                <p className="text-sm text-orange-600 dark:text-orange-400 mt-1">
+                                  Due {formatDate(event.expires_at!)} • ${event.amount.toFixed(2)}
+                                </p>
+                                <p className="text-xs text-orange-500 dark:text-orange-400 mt-1">
+                                  Assigned by {event.assignment.assigned_by_name} on {formatDate(event.assignment.assigned_at)}
+                                </p>
+                              </div>
                               <span className="px-2 py-1 bg-orange-100 dark:bg-orange-800 text-orange-800 dark:text-orange-200 text-xs rounded-full">
                                 Due Soon
                               </span>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelectedEvent(event);
-                                }}
-                                className="inline-flex items-center gap-1 rounded-lg bg-indigo-600 text-white px-3 py-1.5 text-sm hover:bg-indigo-500"
-                              >
-                                <DollarSign size={14} />
-                                <span>Pay Now</span>
-                              </button>
                             </div>
-                          </div>
-                        </div>
-                      ))}
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {/* Active */}
-                {groupedAssignedEvents.active.length > 0 && (
-                  <div>
-                    <h3 className="flex items-center gap-2 text-sm font-medium text-green-600 mb-3">
-                      <CheckCircle size={16} />
-                      Active ({groupedAssignedEvents.active.length})
-                    </h3>
-                    <div className="space-y-3">
-                      {groupedAssignedEvents.active.map((event) => (
-                        <div
-                          key={event.id}
-                          className="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg p-4 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-750 transition-colors"
-                          onClick={() => setSelectedEvent(event)}
-                        >
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="flex-1">
-                              <h4 className="font-medium text-zinc-900 dark:text-zinc-100">{event.title}</h4>
-                              <p className="text-sm text-zinc-600 dark:text-zinc-400">{event.club.name}</p>
-                              <p className="text-sm text-zinc-500 dark:text-zinc-500 mt-1">
-                                Due {formatDate(event.expires_at!)} • {formatCurrency(event.amount)}
-                              </p>
-                              <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">
-                                Assigned by {event.assignment.assigned_by_name} on{" "}
-                                {formatDate(event.assignment.assigned_at)}
-                              </p>
-                            </div>
-                            <div className="flex items-center gap-2">
+                  {/* Active */}
+                  {groupedAssignedEvents.active.length > 0 && (
+                    <div>
+                      <h3 className="flex items-center gap-2 text-sm font-medium text-green-600 mb-3">
+                        <CheckCircle size={16} />
+                        Active ({groupedAssignedEvents.active.length})
+                      </h3>
+                      <div className="space-y-3">
+                        {groupedAssignedEvents.active.map((event) => (
+                          <button
+                            key={event.id}
+                            onClick={() => setActivePayEvent(event)}
+                            className="w-full text-left bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg p-4 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition"
+                          >
+                            <div className="flex items-start justify-between gap-4">
+                              <div className="flex-1">
+                                <h4 className="font-medium text-zinc-900 dark:text-zinc-100">{event.title}</h4>
+                                <p className="text-sm text-zinc-600 dark:text-zinc-400">{event.club.name}</p>
+                                <p className="text-sm text-zinc-500 dark:text-zinc-500 mt-1">
+                                  Due {formatDate(event.expires_at!)} • ${event.amount.toFixed(2)}
+                                </p>
+                                <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">
+                                  Assigned by {event.assignment.assigned_by_name} on {formatDate(event.assignment.assigned_at)}
+                                </p>
+                              </div>
                               <span className="px-2 py-1 bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-200 text-xs rounded-full">
                                 Active
                               </span>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelectedEvent(event);
-                                }}
-                                className="inline-flex items-center gap-1 rounded-lg bg-indigo-600 text-white px-3 py-1.5 text-sm hover:bg-indigo-500"
-                              >
-                                <DollarSign size={14} />
-                                <span>Pay Now</span>
-                              </button>
                             </div>
-                          </div>
-                        </div>
-                      ))}
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {/* No Due Date */}
-                {groupedAssignedEvents["no-due-date"].length > 0 && (
-                  <div>
-                    <h3 className="flex items-center gap-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-3">
-                      <CalendarDays size={16} />
-                      No Due Date ({groupedAssignedEvents["no-due-date"].length})
-                    </h3>
-                    <div className="space-y-3">
-                      {groupedAssignedEvents["no-due-date"].map((event) => (
-                        <div
-                          key={event.id}
-                          className="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg p-4 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-750 transition-colors"
-                          onClick={() => setSelectedEvent(event)}
-                        >
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="flex-1">
-                              <h4 className="font-medium text-zinc-900 dark:text-zinc-100">{event.title}</h4>
-                              <p className="text-sm text-zinc-600 dark:text-zinc-400">{event.club.name}</p>
-                              <p className="text-sm text-zinc-500 dark:text-zinc-500 mt-1">{formatCurrency(event.amount)}</p>
-                              <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">
-                                Assigned by {event.assignment.assigned_by_name} on{" "}
-                                {formatDate(event.assignment.assigned_at)}
-                              </p>
-                            </div>
-                            <div className="flex items-center gap-2">
+                  {/* No Due Date */}
+                  {groupedAssignedEvents["no-due-date"].length > 0 && (
+                    <div>
+                      <h3 className="flex items-center gap-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 mb-3">
+                        <CalendarDays size={16} />
+                        No Due Date ({groupedAssignedEvents["no-due-date"].length})
+                      </h3>
+                      <div className="space-y-3">
+                        {groupedAssignedEvents["no-due-date"].map((event) => (
+                          <button
+                            key={event.id}
+                            onClick={() => setActivePayEvent(event)}
+                            className="w-full text-left bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg p-4 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition"
+                          >
+                            <div className="flex items-start justify-between gap-4">
+                              <div className="flex-1">
+                                <h4 className="font-medium text-zinc-900 dark:text-zinc-100">{event.title}</h4>
+                                <p className="text-sm text-zinc-600 dark:text-zinc-400">{event.club.name}</p>
+                                <p className="text-sm text-zinc-500 dark:text-zinc-500 mt-1">${event.amount.toFixed(2)}</p>
+                                <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">
+                                  Assigned by {event.assignment.assigned_by_name} on {formatDate(event.assignment.assigned_at)}
+                                </p>
+                              </div>
                               <span className="px-2 py-1 bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 text-xs rounded-full">
                                 No Due Date
                               </span>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelectedEvent(event);
-                                }}
-                                className="inline-flex items-center gap-1 rounded-lg bg-indigo-600 text-white px-3 py-1.5 text-sm hover:bg-indigo-500"
-                              >
-                                <DollarSign size={14} />
-                                <span>Pay Now</span>
-                              </button>
                             </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        ) : (
-          // Created by you
-          <div className="space-y-6">
-            {createdEvents.length === 0 ? (
-              <div className="text-center py-12">
-                <CalendarDays size={48} className="mx-auto text-zinc-400 mb-4" />
-                <h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100 mb-2">No events created by you</h3>
-                <p className="text-sm text-zinc-500 mb-4">You haven't created any events yet.</p>
-                <button
-                  onClick={() => setShowModal(true)}
-                  className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 text-white px-4 py-2 text-sm hover:bg-indigo-500"
-                >
-                  <Plus size={16} /> Create Event
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {createdEvents
-                  .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-                  .map((event) => (
-                    <div
-                      key={event.id}
-                      className="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg p-4"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h4 className="font-medium text-zinc-900 dark:text-zinc-100">{event.title}</h4>
-                          <p className="text-sm text-zinc-600 dark:text-zinc-400">{event.club.name}</p>
-                          <p className="text-sm text-zinc-500 dark:text-zinc-500 mt-1">
-                            {formatCurrency(event.amount)}
-                            {event.expires_at && ` • Due ${formatDate(event.expires_at)}`}
-                          </p>
-                          <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">Created {formatDate(event.createdAt)}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="flex items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400">
-                            <Users size={12} />
-                            {event.stats.assigneeCount} assigned
-                          </div>
-                          {event.stats.cancelledCount > 0 && (
-                            <span className="px-2 py-1 bg-red-100 dark:bg-red-800 text-red-800 dark:text-red-200 text-xs rounded-full">
-                              {event.stats.cancelledCount} cancelled
-                            </span>
-                          )}
-                          {event.stats.waivedCount > 0 && (
-                            <span className="px-2 py-1 bg-yellow-100 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200 text-xs rounded-full">
-                              {event.stats.waivedCount} waived
-                            </span>
-                          )}
-                        </div>
+                          </button>
+                        ))}
                       </div>
                     </div>
-                  ))}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+                  )}
+                </>
+              )}
+            </div>
+          ) : (
+            // Created by you
+            <div className="space-y-6">
+              {createdEvents.length === 0 ? (
+                <div className="text-center py-12">
+                  <CalendarDays size={48} className="mx-auto text-zinc-400 mb-4" />
+                  <h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100 mb-2">No events created by you</h3>
+                  <p className="text-sm text-zinc-500 mb-4">You haven't created any events yet.</p>
+                  <button
+                    onClick={() => setShowModal(true)}
+                    className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 text-white px-4 py-2 text-sm hover:bg-indigo-500"
+                  >
+                    <Plus size={16} /> Create Event
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {createdEvents
+                    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                    .map((event) => (
+                      <div
+                        key={event.id}
+                        className="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg p-4"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h4 className="font-medium text-zinc-900 dark:text-zinc-100">{event.title}</h4>
+                            <p className="text-sm text-zinc-600 dark:text-zinc-400">{event.club.name}</p>
+                            <p className="text-sm text-zinc-500 dark:text-zinc-500 mt-1">
+                              ${event.amount.toFixed(2)}
+                              {event.expires_at && ` • Due ${formatDate(event.expires_at)}`}
+                            </p>
+                            <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">Created {formatDate(event.createdAt)}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400">
+                              <Users size={12} />
+                              {event.stats.assigneeCount} assigned
+                            </div>
+                            {event.stats.cancelledCount > 0 && (
+                              <span className="px-2 py-1 bg-red-100 dark:bg-red-800 text-red-800 dark:text-red-200 text-xs rounded-full">
+                                {event.stats.cancelledCount} cancelled
+                              </span>
+                            )}
+                            {event.stats.waivedCount > 0 && (
+                              <span className="px-2 py-1 bg-yellow-100 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200 text-xs rounded-full">
+                                {event.stats.waivedCount} waived
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
-      {/* Create Event Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
           <div className="w-full max-w-lg bg-white dark:bg-[#0b0b0f] border border-black/10 dark:border-white/10 rounded-2xl p-5 text-left">
@@ -691,20 +638,21 @@ export default function EventsPage() {
               </button>
             </div>
           </div>
-      
-      {/* Payment Modal */}
-      {selectedEvent && (
-        <PaymentModal
-          isOpen={!!selectedEvent}
-          onClose={() => setSelectedEvent(null)}
-          event={{
-            id: selectedEvent.id,
-            name: selectedEvent.title,
-            price: selectedEvent.amount,
-            description: selectedEvent.description
-          }}
-        />
+        </div>
       )}
-      </div>
-    </main>
-  </>
+        {/* NEW: Pay choice sheet */}
+        {activePayEvent && (
+          <PayChoiceModal
+            event={activePayEvent}
+            authToken={token}
+            onClose={() => setActivePayEvent(null)}
+            onPaid={async () => {
+              setActivePayEvent(null);
+              await refreshEvents();
+            }}
+          />
+        )}
+      </main>
+    </PayPalScriptProvider>
+  );
+}

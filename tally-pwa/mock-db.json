@@ -58,10 +58,16 @@
       "club_clublacrosse": "admin"
     },
     "user_sophiapezeshkangmailcom": {
-      "club_msbtechcenter": "admin"
+      "club_msbtechcenter": "member"
     },
     "user_mdj82georgetownedu": {
       "club_hoyalytics": "admin"
+    },
+    "user_testadminguiacom": {
+      "club_msbtechcenter": "admin"
+    },
+    "user_cdt50georgetownedu": {
+      "club_msbtechcenter": "admin"
     }
   },
   "club_events": [
@@ -84,6 +90,36 @@
       "amount": 30,
       "createdAt": "2025-10-02T17:52:02.879Z",
       "expires_at": "2025-10-15T00:00:00.000Z"
+    },
+    {
+      "id": "event_dues_1759516212976",
+      "author_id": "user_testadminguiacom",
+      "club_id": "club_msbtechcenter",
+      "title": "Dues",
+      "description": "",
+      "amount": 30,
+      "createdAt": "2025-10-03T18:30:12.976Z",
+      "expires_at": "2025-10-04T00:00:00.000Z"
+    },
+    {
+      "id": "event_newtestdues_1759531356599",
+      "author_id": "user_cdt50georgetownedu",
+      "club_id": "club_msbtechcenter",
+      "title": "New Test Dues",
+      "description": "Testing that this works",
+      "amount": 50,
+      "createdAt": "2025-10-03T22:42:36.599Z",
+      "expires_at": "2025-10-05T00:00:00.000Z"
+    },
+    {
+      "id": "event_testingagainfordues_1759531452888",
+      "author_id": "user_cdt50georgetownedu",
+      "club_id": "club_msbtechcenter",
+      "title": "testing again for dues",
+      "description": "",
+      "amount": 60,
+      "createdAt": "2025-10-03T22:44:12.888Z",
+      "expires_at": "2025-10-03T00:00:00.000Z"
     }
   ],
   "club_event_assignees": [
@@ -108,6 +144,90 @@
       "role_at_assign": "admin",
       "assigned_by": "user_sophiapezeshkangmailcom",
       "assigned_at": "2025-10-02T17:52:02.879Z",
+      "is_waived": false,
+      "is_cancelled": false
+    },
+    {
+      "id": "assign_1759516212976_eilhyf",
+      "club_event_id": "event_dues_1759516212976",
+      "club_id": "club_msbtechcenter",
+      "user_id": "user_sophiapezeshkangmailcom",
+      "assigned_amount": 30,
+      "role_at_assign": "admin",
+      "assigned_by": "user_testadminguiacom",
+      "assigned_at": "2025-10-03T18:30:12.976Z",
+      "is_waived": false,
+      "is_cancelled": false
+    },
+    {
+      "id": "assign_1759516212976_3w6bfv",
+      "club_event_id": "event_dues_1759516212976",
+      "club_id": "club_msbtechcenter",
+      "user_id": "user_testadminguiacom",
+      "assigned_amount": 30,
+      "role_at_assign": "admin",
+      "assigned_by": "user_testadminguiacom",
+      "assigned_at": "2025-10-03T18:30:12.976Z",
+      "is_waived": false,
+      "is_cancelled": false
+    },
+    {
+      "id": "assign_1759531356599_8ri1t8",
+      "club_event_id": "event_newtestdues_1759531356599",
+      "club_id": "club_msbtechcenter",
+      "user_id": "user_sophiapezeshkangmailcom",
+      "assigned_amount": 50,
+      "role_at_assign": "admin",
+      "assigned_by": "user_cdt50georgetownedu",
+      "assigned_at": "2025-10-03T22:42:36.599Z",
+      "is_waived": false,
+      "is_cancelled": false
+    },
+    {
+      "id": "assign_1759531356599_9bw22b",
+      "club_event_id": "event_newtestdues_1759531356599",
+      "club_id": "club_msbtechcenter",
+      "user_id": "user_testadminguiacom",
+      "assigned_amount": 50,
+      "role_at_assign": "admin",
+      "assigned_by": "user_cdt50georgetownedu",
+      "assigned_at": "2025-10-03T22:42:36.599Z",
+      "is_waived": false,
+      "is_cancelled": false
+    },
+    {
+      "id": "assign_1759531356599_xxvtrt",
+      "club_event_id": "event_newtestdues_1759531356599",
+      "club_id": "club_msbtechcenter",
+      "user_id": "user_cdt50georgetownedu",
+      "assigned_amount": 50,
+      "role_at_assign": "admin",
+      "assigned_by": "user_cdt50georgetownedu",
+      "assigned_at": "2025-10-03T22:42:36.599Z",
+      "is_waived": false,
+      "is_cancelled": false
+    },
+    {
+      "id": "assign_1759531452888_x4hl78",
+      "club_event_id": "event_testingagainfordues_1759531452888",
+      "club_id": "club_msbtechcenter",
+      "user_id": "user_testadminguiacom",
+      "assigned_amount": 60,
+      "role_at_assign": "admin",
+      "assigned_by": "user_cdt50georgetownedu",
+      "assigned_at": "2025-10-03T22:44:12.888Z",
+      "is_waived": false,
+      "is_cancelled": false
+    },
+    {
+      "id": "assign_1759531452888_b4nyyn",
+      "club_event_id": "event_testingagainfordues_1759531452888",
+      "club_id": "club_msbtechcenter",
+      "user_id": "user_cdt50georgetownedu",
+      "assigned_amount": 60,
+      "role_at_assign": "admin",
+      "assigned_by": "user_cdt50georgetownedu",
+      "assigned_at": "2025-10-03T22:44:12.888Z",
       "is_waived": false,
       "is_cancelled": false
     }
