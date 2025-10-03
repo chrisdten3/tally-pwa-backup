@@ -22,6 +22,7 @@ type Props = {
 export default function PayChoiceModal({ event, authToken, onClose, onPaid }: Props) {
   // choice -> card or venmo
   const [step, setStep] = useState<"choice" | "card" | "venmo">("choice");
+  const [processing, setProcessing] = useState(false);
   const amount = Number(event.amount || 0);
   const amountLabel = amount.toFixed(2);
 
@@ -41,14 +42,25 @@ export default function PayChoiceModal({ event, authToken, onClose, onPaid }: Pr
   };
 
   const onApprove = async (data: any) => {
-    const r = await fetch("/api/paypal/capture-order", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ orderId: data.orderID }),
-    });
-    const j = await r.json();
-    if (!r.ok) throw new Error(j?.error || "capture failed");
-    onPaid?.();
+    setProcessing(true);
+    try {
+      const r = await fetch("/api/paypal/capture-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+        body: JSON.stringify({ orderId: data.orderID, eventId: event.id }),
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j?.error || "capture failed");
+      // server adds _dbUpdated when it successfully updated mock DB
+      if (j._dbUpdated) {
+        onPaid?.();
+      } else {
+        // still call onPaid as fallback but warn
+        onPaid?.();
+      }
+    } finally {
+      setProcessing(false);
+    }
   };
 
   return (
@@ -113,12 +125,16 @@ export default function PayChoiceModal({ event, authToken, onClose, onPaid }: Pr
           <div className="mt-5">
             <div className="text-sm text-zinc-500 mb-2">Checkout • ${amountLabel}</div>
             <div className="rounded-xl border border-black/10 dark:border-white/10 p-3 flex justify-center">
-              <PayPalButtons
-                style={{ layout: "vertical", shape: "pill" }}
-                createOrder={createOrder}
-                onApprove={onApprove}
-                onError={(e) => console.error(e)}
-              />
+              <div className="opacity-90">
+                <PayPalButtons
+                  style={{ layout: "vertical", shape: "pill" }}
+                  createOrder={createOrder}
+                  onApprove={onApprove}
+                  onError={(e) => console.error(e)}
+                  forceReRender={[processing]}
+                />
+                {processing && <div className="text-xs text-zinc-500 mt-2">Processing payment…</div>}
+              </div>
             </div>
             <button
               onClick={() => setStep("choice")}

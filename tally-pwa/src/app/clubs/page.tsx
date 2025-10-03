@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { Users, UserPlus } from "lucide-react";
 
-type Club = { id?: string; name?: string; description?: string };
+type Club = { id?: string; name?: string; description?: string; balance?: number };
 
 export default function ClubsPage() {
   const [loading, setLoading] = useState(true);
@@ -83,8 +83,17 @@ export default function ClubsPage() {
                 <h2 className="text-lg font-semibold">Your clubs</h2>
                 <div className="mt-3 flex flex-col gap-2">
                   {clubs.map((c) => (
-                    <div key={c.id || c.name} className="rounded-xl border border-white/10 bg-zinc-900/40 p-4">
-                      <div className="font-medium">{c.name || "Unnamed club"}</div>
+                    <div
+                      key={c.id || c.name}
+                      className="rounded-xl border border-white/10 bg-zinc-900/40 p-4 cursor-pointer"
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => (window.location.href = `/clubs/${c.id}`)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="font-medium">{c.name || "Unnamed club"}</div>
+                        <div className="text-sm text-zinc-400">Balance: ${((c.balance as number) || 0).toFixed(2)}</div>
+                      </div>
                       {c.description ? (
                         <div className="text-sm text-zinc-500 mt-1">{c.description}</div>
                       ) : null}

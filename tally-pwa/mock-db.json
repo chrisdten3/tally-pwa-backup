@@ -35,7 +35,8 @@
       "name": "msb tech center",
       "email": "sophiapezeshkan@gmail.com",
       "description": "",
-      "createdAt": "2025-10-02T17:51:11.764Z"
+      "createdAt": "2025-10-02T17:51:11.764Z",
+      "balance": 460
     },
     {
       "id": "club_clublacrosse",
@@ -120,6 +121,36 @@
       "amount": 60,
       "createdAt": "2025-10-03T22:44:12.888Z",
       "expires_at": "2025-10-03T00:00:00.000Z"
+    },
+    {
+      "id": "event_testevent_1759533804986",
+      "author_id": "user_cdt50georgetownedu",
+      "club_id": "club_msbtechcenter",
+      "title": "Test Event",
+      "description": "",
+      "amount": 50,
+      "createdAt": "2025-10-03T23:23:24.986Z",
+      "expires_at": "2025-10-06T00:00:00.000Z"
+    },
+    {
+      "id": "event_testing123_1759534421940",
+      "author_id": "user_cdt50georgetownedu",
+      "club_id": "club_msbtechcenter",
+      "title": "testing123",
+      "description": "",
+      "amount": 10,
+      "createdAt": "2025-10-03T23:33:41.940Z",
+      "expires_at": null
+    },
+    {
+      "id": "event_newtesttomakesure_1759534860229",
+      "author_id": "user_cdt50georgetownedu",
+      "club_id": "club_msbtechcenter",
+      "title": "new test to make sure",
+      "description": "",
+      "amount": 10,
+      "createdAt": "2025-10-03T23:41:00.229Z",
+      "expires_at": null
     }
   ],
   "club_event_assignees": [
@@ -181,7 +212,10 @@
       "assigned_by": "user_cdt50georgetownedu",
       "assigned_at": "2025-10-03T22:42:36.599Z",
       "is_waived": false,
-      "is_cancelled": false
+      "is_cancelled": true,
+      "paid_at": "2025-10-03T23:08:40.057Z",
+      "payment_provider": "paypal",
+      "payment_id": "91479686W1194773L"
     },
     {
       "id": "assign_1759531356599_9bw22b",
@@ -193,7 +227,10 @@
       "assigned_by": "user_cdt50georgetownedu",
       "assigned_at": "2025-10-03T22:42:36.599Z",
       "is_waived": false,
-      "is_cancelled": false
+      "is_cancelled": true,
+      "paid_at": "2025-10-03T23:11:25.939Z",
+      "payment_provider": "paypal",
+      "payment_id": "83975383CE612652R"
     },
     {
       "id": "assign_1759531356599_xxvtrt",
@@ -205,7 +242,10 @@
       "assigned_by": "user_cdt50georgetownedu",
       "assigned_at": "2025-10-03T22:42:36.599Z",
       "is_waived": false,
-      "is_cancelled": false
+      "is_cancelled": true,
+      "paid_at": "2025-10-03T23:12:17.204Z",
+      "payment_provider": "paypal",
+      "payment_id": "3T7408311A844645V"
     },
     {
       "id": "assign_1759531452888_x4hl78",
@@ -217,7 +257,10 @@
       "assigned_by": "user_cdt50georgetownedu",
       "assigned_at": "2025-10-03T22:44:12.888Z",
       "is_waived": false,
-      "is_cancelled": false
+      "is_cancelled": true,
+      "paid_at": "2025-10-03T23:09:02.152Z",
+      "payment_provider": "paypal",
+      "payment_id": "32065921HB784893V"
     },
     {
       "id": "assign_1759531452888_b4nyyn",
@@ -229,7 +272,265 @@
       "assigned_by": "user_cdt50georgetownedu",
       "assigned_at": "2025-10-03T22:44:12.888Z",
       "is_waived": false,
+      "is_cancelled": true,
+      "paid_at": "2025-10-03T23:11:01.588Z",
+      "payment_provider": "paypal",
+      "payment_id": "0YM87324PJ138701D"
+    },
+    {
+      "id": "assign_1759533804986_0jts7x",
+      "club_event_id": "event_testevent_1759533804986",
+      "club_id": "club_msbtechcenter",
+      "user_id": "user_sophiapezeshkangmailcom",
+      "assigned_amount": 50,
+      "role_at_assign": "member",
+      "assigned_by": "user_cdt50georgetownedu",
+      "assigned_at": "2025-10-03T23:23:24.986Z",
+      "is_waived": false,
+      "is_cancelled": true,
+      "paid_at": "2025-10-03T23:23:58.370Z",
+      "payment_provider": "paypal",
+      "payment_id": "62V58334SW170342X"
+    },
+    {
+      "id": "assign_1759533804986_piyi41",
+      "club_event_id": "event_testevent_1759533804986",
+      "club_id": "club_msbtechcenter",
+      "user_id": "user_testadminguiacom",
+      "assigned_amount": 50,
+      "role_at_assign": "admin",
+      "assigned_by": "user_cdt50georgetownedu",
+      "assigned_at": "2025-10-03T23:23:24.986Z",
+      "is_waived": false,
+      "is_cancelled": true,
+      "paid_at": "2025-10-03T23:29:31.357Z",
+      "payment_provider": "paypal",
+      "payment_id": "6A962330535160805"
+    },
+    {
+      "id": "assign_1759533804986_asxe3o",
+      "club_event_id": "event_testevent_1759533804986",
+      "club_id": "club_msbtechcenter",
+      "user_id": "user_cdt50georgetownedu",
+      "assigned_amount": 50,
+      "role_at_assign": "admin",
+      "assigned_by": "user_cdt50georgetownedu",
+      "assigned_at": "2025-10-03T23:23:24.986Z",
+      "is_waived": false,
+      "is_cancelled": true,
+      "paid_at": "2025-10-03T23:33:31.150Z",
+      "payment_provider": "paypal",
+      "payment_id": "7PG698384F067545F"
+    },
+    {
+      "id": "assign_1759534421940_gw0wmx",
+      "club_event_id": "event_testing123_1759534421940",
+      "club_id": "club_msbtechcenter",
+      "user_id": "user_sophiapezeshkangmailcom",
+      "assigned_amount": 10,
+      "role_at_assign": "member",
+      "assigned_by": "user_cdt50georgetownedu",
+      "assigned_at": "2025-10-03T23:33:41.940Z",
+      "is_waived": false,
+      "is_cancelled": true,
+      "paid_at": "2025-10-03T23:33:52.760Z",
+      "payment_provider": "paypal",
+      "payment_id": "07C47676Y11777219"
+    },
+    {
+      "id": "assign_1759534421940_xnwodz",
+      "club_event_id": "event_testing123_1759534421940",
+      "club_id": "club_msbtechcenter",
+      "user_id": "user_testadminguiacom",
+      "assigned_amount": 10,
+      "role_at_assign": "admin",
+      "assigned_by": "user_cdt50georgetownedu",
+      "assigned_at": "2025-10-03T23:33:41.940Z",
+      "is_waived": false,
+      "is_cancelled": true,
+      "paid_at": "2025-10-03T23:37:37.403Z",
+      "payment_provider": "paypal",
+      "payment_id": "0RJ23495TW6353005"
+    },
+    {
+      "id": "assign_1759534421940_x15bib",
+      "club_event_id": "event_testing123_1759534421940",
+      "club_id": "club_msbtechcenter",
+      "user_id": "user_cdt50georgetownedu",
+      "assigned_amount": 10,
+      "role_at_assign": "admin",
+      "assigned_by": "user_cdt50georgetownedu",
+      "assigned_at": "2025-10-03T23:33:41.940Z",
+      "is_waived": false,
+      "is_cancelled": true,
+      "paid_at": "2025-10-03T23:40:46.123Z",
+      "payment_provider": "paypal",
+      "payment_id": "27G04705844712405"
+    },
+    {
+      "id": "assign_1759534860229_pbokll",
+      "club_event_id": "event_newtesttomakesure_1759534860229",
+      "club_id": "club_msbtechcenter",
+      "user_id": "user_sophiapezeshkangmailcom",
+      "assigned_amount": 10,
+      "role_at_assign": "member",
+      "assigned_by": "user_cdt50georgetownedu",
+      "assigned_at": "2025-10-03T23:41:00.229Z",
+      "is_waived": false,
       "is_cancelled": false
+    },
+    {
+      "id": "assign_1759534860229_asmdgv",
+      "club_event_id": "event_newtesttomakesure_1759534860229",
+      "club_id": "club_msbtechcenter",
+      "user_id": "user_testadminguiacom",
+      "assigned_amount": 10,
+      "role_at_assign": "admin",
+      "assigned_by": "user_cdt50georgetownedu",
+      "assigned_at": "2025-10-03T23:41:00.229Z",
+      "is_waived": false,
+      "is_cancelled": false
+    },
+    {
+      "id": "assign_1759534860230_roovxs",
+      "club_event_id": "event_newtesttomakesure_1759534860229",
+      "club_id": "club_msbtechcenter",
+      "user_id": "user_cdt50georgetownedu",
+      "assigned_amount": 10,
+      "role_at_assign": "admin",
+      "assigned_by": "user_cdt50georgetownedu",
+      "assigned_at": "2025-10-03T23:41:00.229Z",
+      "is_waived": false,
+      "is_cancelled": true,
+      "paid_at": "2025-10-03T23:41:12.213Z",
+      "payment_provider": "paypal",
+      "payment_id": "1YW42405MF778132S"
+    }
+  ],
+  "ledgers": [
+    {
+      "id": "ledger_1759533838370_sfqjox",
+      "club_id": "club_msbtechcenter",
+      "type": "payment",
+      "amount": 50,
+      "balance_before": 270,
+      "balance_after": 320,
+      "user_id": "user_sophiapezeshkangmailcom",
+      "event_id": "event_testevent_1759533804986",
+      "payment_provider": "paypal",
+      "payment_id": "62V58334SW170342X",
+      "createdAt": "2025-10-03T23:23:58.370Z",
+      "description": "Payment for event event_testevent_1759533804986"
+    },
+    {
+      "id": "ledger_1759534171357_be0qk6",
+      "club_id": "club_msbtechcenter",
+      "type": "payment",
+      "amount": 50,
+      "balance_before": 320,
+      "balance_after": 370,
+      "user_id": "user_testadminguiacom",
+      "event_id": "event_testevent_1759533804986",
+      "payment_provider": "paypal",
+      "payment_id": "6A962330535160805",
+      "createdAt": "2025-10-03T23:29:31.357Z",
+      "description": "Payment for event event_testevent_1759533804986"
+    },
+    {
+      "id": "ledger_1759534411150_hxgwed",
+      "club_id": "club_msbtechcenter",
+      "type": "payment",
+      "amount": 50,
+      "balance_before": 370,
+      "balance_after": 420,
+      "user_id": "user_cdt50georgetownedu",
+      "event_id": "event_testevent_1759533804986",
+      "payment_provider": "paypal",
+      "payment_id": "7PG698384F067545F",
+      "createdAt": "2025-10-03T23:33:31.150Z",
+      "description": "Payment for event event_testevent_1759533804986"
+    },
+    {
+      "id": "ledger_1759534432760_xr7e6l",
+      "club_id": "club_msbtechcenter",
+      "type": "payment",
+      "amount": 10,
+      "balance_before": 420,
+      "balance_after": 430,
+      "user_id": "user_sophiapezeshkangmailcom",
+      "completed_by_user_id": "user_sophiapezeshkangmailcom",
+      "completed_by_name": "Sophia Pezeshkan",
+      "completed_by_email": "sophiapezeshkan@gmail.com",
+      "event_id": "event_testing123_1759534421940",
+      "payment_provider": "paypal",
+      "payment_id": "07C47676Y11777219",
+      "createdAt": "2025-10-03T23:33:52.760Z",
+      "description": "Payment for event event_testing123_1759534421940"
+    },
+    {
+      "id": "ledger_1759534657403_7h69y7",
+      "club_id": "club_msbtechcenter",
+      "type": "payment",
+      "amount": 10,
+      "balance_before": 430,
+      "balance_after": 440,
+      "user_id": "user_testadminguiacom",
+      "event_id": "event_testing123_1759534421940",
+      "payment_provider": "paypal",
+      "payment_id": "0RJ23495TW6353005",
+      "createdAt": "2025-10-03T23:37:37.403Z",
+      "description": "Payment for event event_testing123_1759534421940"
+    },
+    {
+      "id": "ledger_1759534846123_k8xp9w",
+      "club_id": "club_msbtechcenter",
+      "type": "payment",
+      "amount": 10,
+      "balance_before": 440,
+      "balance_after": 450,
+      "user_id": "user_cdt50georgetownedu",
+      "event_id": "event_testing123_1759534421940",
+      "payment_provider": "paypal",
+      "payment_id": "27G04705844712405",
+      "createdAt": "2025-10-03T23:40:46.123Z",
+      "description": "Payment for event event_testing123_1759534421940"
+    },
+    {
+      "id": "ledger_1759534872213_zvkjqr",
+      "club_id": "club_msbtechcenter",
+      "type": "payment",
+      "amount": 10,
+      "balance_before": 450,
+      "balance_after": 460,
+      "user_id": "user_cdt50georgetownedu",
+      "event_id": "event_newtesttomakesure_1759534860229",
+      "payment_provider": "paypal",
+      "payment_id": "1YW42405MF778132S",
+      "createdAt": "2025-10-03T23:41:12.213Z",
+      "description": "Payment for event event_newtesttomakesure_1759534860229"
+    }
+  ],
+  "payments_pending": [
+    {
+      "orderId": "6C94336944024474M",
+      "eventId": "event_testevent_1759533804986",
+      "assignmentId": "assign_1759533804986_asxe3o",
+      "createdAt": "2025-10-03T23:29:13.211Z",
+      "captured": false
+    },
+    {
+      "orderId": "67827515LU370715U",
+      "eventId": "event_testing123_1759534421940",
+      "assignmentId": "assign_1759534421940_x15bib",
+      "createdAt": "2025-10-03T23:33:46.788Z",
+      "captured": false
+    },
+    {
+      "orderId": "2WM968775U022821V",
+      "eventId": "event_newtesttomakesure_1759534860229",
+      "assignmentId": "assign_1759534860230_roovxs",
+      "createdAt": "2025-10-03T23:41:06.564Z",
+      "captured": false
     }
   ]
 }

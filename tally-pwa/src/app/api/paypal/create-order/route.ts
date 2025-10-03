@@ -75,7 +75,19 @@ export async function POST(req: NextRequest) {
     const json = await res.json();
     if (!res.ok) return NextResponse.json(json, { status: res.status });
 
-    // (Optional) persist json.id as a pending payment in your ledger
+    // persist a pending payment so we can avoid duplicate orders for the same assignment
+    try {
+      db.payments_pending = db.payments_pending || [];
+      // check again for an existing pending for this assignment
+      const existing = db.payments_pending.find((p: any) => p.assignmentId === assignment.id && !p.captured);
+      if (!existing) {
+        db.payments_pending.push({ orderId: json.id, eventId, assignmentId: assignment.id, createdAt: new Date().toISOString(), captured: false });
+        fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2), "utf8");
+      }
+    } catch {
+      // ignore mock db errors
+    }
+
     return NextResponse.json({ id: json.id });
   } catch (e: any) {
     return NextResponse.json({ error: e.message || "Server error" }, { status: 500 });
