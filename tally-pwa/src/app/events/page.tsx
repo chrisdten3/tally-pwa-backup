@@ -2,9 +2,8 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { CalendarDays, Plus, X, Clock, AlertCircle, CheckCircle, Users } from "lucide-react";
-import EventPayButton from "@/components/EventPayButton";
-import { PayPalScriptProvider, type ReactPayPalScriptOptions } from "@paypal/react-paypal-js";
+import { CalendarDays, Plus, X, Clock, AlertCircle, CheckCircle, Users, CreditCard, DollarSign } from "lucide-react";
+import PaymentModal from "@/components/PaymentModal";
 
 type Club = { id: string; name: string };
 type Member = { id: string; name: string; email: string; role: "admin" | "member" };
@@ -71,6 +70,7 @@ export default function EventsPage() {
   const [createdEvents, setCreatedEvents] = useState<CreatedEvent[]>([]);
   const [eventsLoading, setEventsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<"assigned" | "created">("assigned");
+  const [selectedEvent, setSelectedEvent] = useState<AssignedEvent | null>(null);
 
   // Prefer real token; fallback to a dev/mock so EventPayButton isn't undefined
   const token =
@@ -267,9 +267,7 @@ export default function EventsPage() {
   }, [assignedEvents]);
 
   return (
-    <PayPalScriptProvider
-      options={options}
-    >
+    <>
     <main className="min-h-screen p-4 pb-20">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
@@ -342,7 +340,8 @@ export default function EventsPage() {
                       {groupedAssignedEvents.overdue.map((event) => (
                         <div
                           key={event.id}
-                          className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4"
+                          className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 cursor-pointer hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                          onClick={() => setSelectedEvent(event)}
                         >
                           <div className="flex items-start justify-between gap-4">
                             <div className="flex-1">
@@ -360,7 +359,16 @@ export default function EventsPage() {
                               <span className="px-2 py-1 bg-red-100 dark:bg-red-800 text-red-800 dark:text-red-200 text-xs rounded-full">
                                 Overdue
                               </span>
-                              <EventPayButton eventId={event.id} authToken={token} />
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedEvent(event);
+                                }}
+                                className="inline-flex items-center gap-1 rounded-lg bg-indigo-600 text-white px-3 py-1.5 text-sm hover:bg-indigo-500"
+                              >
+                                <DollarSign size={14} />
+                                <span>Pay Now</span>
+                              </button>
                             </div>
                           </div>
                         </div>
@@ -380,7 +388,8 @@ export default function EventsPage() {
                       {groupedAssignedEvents["due-soon"].map((event) => (
                         <div
                           key={event.id}
-                          className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4"
+                          className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4 cursor-pointer hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors"
+                          onClick={() => setSelectedEvent(event)}
                         >
                           <div className="flex items-start justify-between gap-4">
                             <div className="flex-1">
@@ -398,7 +407,16 @@ export default function EventsPage() {
                               <span className="px-2 py-1 bg-orange-100 dark:bg-orange-800 text-orange-800 dark:text-orange-200 text-xs rounded-full">
                                 Due Soon
                               </span>
-                              <EventPayButton eventId={event.id} authToken={token} />
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedEvent(event);
+                                }}
+                                className="inline-flex items-center gap-1 rounded-lg bg-indigo-600 text-white px-3 py-1.5 text-sm hover:bg-indigo-500"
+                              >
+                                <DollarSign size={14} />
+                                <span>Pay Now</span>
+                              </button>
                             </div>
                           </div>
                         </div>
@@ -418,7 +436,8 @@ export default function EventsPage() {
                       {groupedAssignedEvents.active.map((event) => (
                         <div
                           key={event.id}
-                          className="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg p-4"
+                          className="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg p-4 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-750 transition-colors"
+                          onClick={() => setSelectedEvent(event)}
                         >
                           <div className="flex items-start justify-between gap-4">
                             <div className="flex-1">
@@ -436,7 +455,16 @@ export default function EventsPage() {
                               <span className="px-2 py-1 bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-200 text-xs rounded-full">
                                 Active
                               </span>
-                              <EventPayButton eventId={event.id} authToken={token} />
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedEvent(event);
+                                }}
+                                className="inline-flex items-center gap-1 rounded-lg bg-indigo-600 text-white px-3 py-1.5 text-sm hover:bg-indigo-500"
+                              >
+                                <DollarSign size={14} />
+                                <span>Pay Now</span>
+                              </button>
                             </div>
                           </div>
                         </div>
@@ -456,7 +484,8 @@ export default function EventsPage() {
                       {groupedAssignedEvents["no-due-date"].map((event) => (
                         <div
                           key={event.id}
-                          className="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg p-4"
+                          className="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg p-4 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-750 transition-colors"
+                          onClick={() => setSelectedEvent(event)}
                         >
                           <div className="flex items-start justify-between gap-4">
                             <div className="flex-1">
@@ -472,7 +501,16 @@ export default function EventsPage() {
                               <span className="px-2 py-1 bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 text-xs rounded-full">
                                 No Due Date
                               </span>
-                              <EventPayButton eventId={event.id} authToken={token} />
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedEvent(event);
+                                }}
+                                className="inline-flex items-center gap-1 rounded-lg bg-indigo-600 text-white px-3 py-1.5 text-sm hover:bg-indigo-500"
+                              >
+                                <DollarSign size={14} />
+                                <span>Pay Now</span>
+                              </button>
                             </div>
                           </div>
                         </div>
@@ -653,9 +691,20 @@ export default function EventsPage() {
               </button>
             </div>
           </div>
-        </div>
+      
+      {/* Payment Modal */}
+      {selectedEvent && (
+        <PaymentModal
+          isOpen={!!selectedEvent}
+          onClose={() => setSelectedEvent(null)}
+          event={{
+            id: selectedEvent.id,
+            name: selectedEvent.title,
+            price: selectedEvent.amount,
+            description: selectedEvent.description
+          }}
+        />
       )}
+      </div>
     </main>
-    </PayPalScriptProvider>
-  );
-}
+  </>

@@ -13,6 +13,13 @@
       "lastName": "Pezeshkan",
       "name": "Sophia Pezeshkan",
       "email": "sophiapezeshkan@gmail.com"
+    },
+    "mdj82@georgetown.edu": {
+      "id": "user_mdj82georgetownedu",
+      "firstName": "Matthew ",
+      "lastName": "Jordan",
+      "name": "Matthew  Jordan",
+      "email": "mdj82@georgetown.edu"
     }
   },
   "clubs": [
@@ -36,6 +43,13 @@
       "email": "clublax@georgetown.edu",
       "description": "",
       "createdAt": "2025-10-02T17:56:02.688Z"
+    },
+    {
+      "id": "club_hoyalytics",
+      "name": "Hoyalytics",
+      "email": "hoyalytics_ug@georgetown.com",
+      "description": "",
+      "createdAt": "2025-10-03T18:20:28.527Z"
     }
   ],
   "memberships": {
@@ -45,6 +59,9 @@
     },
     "user_sophiapezeshkangmailcom": {
       "club_msbtechcenter": "admin"
+    },
+    "user_mdj82georgetownedu": {
+      "club_hoyalytics": "admin"
     }
   },
   "club_events": [
