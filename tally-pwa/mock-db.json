@@ -20,6 +20,13 @@
       "lastName": "Doe",
       "name": "John Doe",
       "email": "cdt50@georgetown.edu"
+    },
+    "testadmin1@guia.com": {
+      "id": "user_testadmin1guiacom",
+      "firstName": "John",
+      "lastName": "Doe",
+      "name": "John Doe",
+      "email": "testadmin1@guia.com"
     }
   },
   "clubs": [
@@ -29,7 +36,7 @@
       "email": "techcenter@georgetown.edu",
       "description": "",
       "createdAt": "2025-10-05T16:12:04.175Z",
-      "balance": 50
+      "balance": 4.31
     },
     {
       "id": "club_clubbaseball",
@@ -49,6 +56,9 @@
     },
     "user_testadminguiacom": {
       "club_clubbaseball": "admin"
+    },
+    "user_testadmin1guiacom": {
+      "club_msbtechcenter": "admin"
     }
   },
   "club_events": [
@@ -171,6 +181,204 @@
       "completed_by_name": "testadmin@guia.com",
       "createdAt": "2025-10-06T02:45:33.905Z",
       "description": "Payout to @testuser"
+    },
+    {
+      "id": "ledger_1759725142436_1wnual",
+      "club_id": "club_msbtechcenter",
+      "type": "payout",
+      "status": "PENDING",
+      "amount": -25,
+      "balance_before": 50,
+      "balance_after": 50,
+      "user_id": "user_testadmin1guiacom",
+      "completed_by_user_id": "user_testadmin1guiacom",
+      "completed_by_email": "testadmin1@guia.com",
+      "completed_by_name": "testadmin1@guia.com",
+      "createdAt": "2025-10-06T04:32:22.436Z",
+      "description": "Sandbox payout to sb-2lod745118451@personal.example.com",
+      "payout_id": "payout_1759725142436_j9ewdy",
+      "provider_batch_id": "UMGNPPRVGCYFC",
+      "provider_item_id": null
+    },
+    {
+      "id": "ledger_1759725232533_9mvlog",
+      "club_id": "club_msbtechcenter",
+      "type": "payout",
+      "amount": -25,
+      "balance_before": 50,
+      "balance_after": 25,
+      "user_id": "user_testadmin1guiacom",
+      "completed_by_user_id": "user_testadmin1guiacom",
+      "completed_by_email": "testadmin1@guia.com",
+      "completed_by_name": "testadmin1@guia.com",
+      "createdAt": "2025-10-06T04:33:52.533Z",
+      "description": "Payout to sb-2lod745118451@personal.example.com",
+      "payout_id": "payout_1759725232533_rwdrh6",
+      "provider_batch_id": "S5747CDRSTMS4"
+    },
+    {
+      "id": "ledger_1759725325889_wknn4p",
+      "club_id": "club_msbtechcenter",
+      "type": "payout",
+      "amount": -10.69,
+      "balance_before": 25,
+      "balance_after": 14.31,
+      "user_id": "user_testadmin1guiacom",
+      "completed_by_user_id": "user_testadmin1guiacom",
+      "completed_by_email": "testadmin1@guia.com",
+      "completed_by_name": "testadmin1@guia.com",
+      "createdAt": "2025-10-06T04:35:25.889Z",
+      "description": "Payout to sb-2lod745118451@personal.example.com",
+      "payout_id": "payout_1759725325889_3prkul",
+      "provider_batch_id": "MVC3CUGFAL8LS"
+    },
+    {
+      "id": "ledger_1759725373636_d9c53z",
+      "club_id": "club_msbtechcenter",
+      "type": "payout",
+      "amount": -10,
+      "balance_before": 14.31,
+      "balance_after": 4.31,
+      "user_id": "user_testadmin1guiacom",
+      "completed_by_user_id": "user_testadmin1guiacom",
+      "completed_by_email": "testadmin1@guia.com",
+      "completed_by_name": "testadmin1@guia.com",
+      "createdAt": "2025-10-06T04:36:13.636Z",
+      "description": "Payout to sb-2lod745118451@personal.example.com",
+      "payout_id": "payout_1759725373636_bks0go",
+      "provider_batch_id": "GH43XUF84WH3S"
+    }
+  ],
+  "payouts": [
+    {
+      "id": "payout_1759725142436_j9ewdy",
+      "env": "sandbox",
+      "club_id": "club_msbtechcenter",
+      "amount": 25,
+      "currency": "USD",
+      "receiver": "sb-2lod745118451@personal.example.com",
+      "receiver_type": "EMAIL",
+      "provider": "paypal",
+      "provider_batch_id": "UMGNPPRVGCYFC",
+      "provider_item_id": null,
+      "status": "PENDING",
+      "createdAt": "2025-10-06T04:32:22.436Z",
+      "raw": {
+        "batch_header": {
+          "payout_batch_id": "UMGNPPRVGCYFC",
+          "batch_status": "PENDING",
+          "sender_batch_header": {
+            "sender_batch_id": "sb_payout_club_msbtechcenter_1759725142021_4rq9",
+            "email_subject": "You received a payout from MSB Tech Center",
+            "email_message": "Sandbox payout of $25.00 from MSB Tech Center"
+          }
+        },
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v1/payments/payouts/UMGNPPRVGCYFC",
+            "rel": "self",
+            "method": "GET",
+            "encType": "application/json"
+          }
+        ]
+      },
+      "initiated_by": "user_testadmin1guiacom"
+    },
+    {
+      "id": "payout_1759725232533_rwdrh6",
+      "club_id": "club_msbtechcenter",
+      "amount": 25,
+      "currency": "USD",
+      "receiver": "sb-2lod745118451@personal.example.com",
+      "receiver_type": "EMAIL",
+      "provider": "paypal",
+      "provider_batch_id": "S5747CDRSTMS4",
+      "status": "PENDING",
+      "createdAt": "2025-10-06T04:33:52.533Z",
+      "raw": {
+        "batch_header": {
+          "payout_batch_id": "S5747CDRSTMS4",
+          "batch_status": "PENDING",
+          "sender_batch_header": {
+            "sender_batch_id": "payout_club_msbtechcenter_1759725232116_p1p8",
+            "email_subject": "You received a payout from MSB Tech Center",
+            "email_message": "Payout of $25.00 from MSB Tech Center"
+          }
+        },
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v1/payments/payouts/S5747CDRSTMS4",
+            "rel": "self",
+            "method": "GET",
+            "encType": "application/json"
+          }
+        ]
+      },
+      "initiated_by": "user_testadmin1guiacom"
+    },
+    {
+      "id": "payout_1759725325889_3prkul",
+      "club_id": "club_msbtechcenter",
+      "amount": 10.69,
+      "currency": "USD",
+      "receiver": "sb-2lod745118451@personal.example.com",
+      "receiver_type": "EMAIL",
+      "provider": "paypal",
+      "provider_batch_id": "MVC3CUGFAL8LS",
+      "status": "PENDING",
+      "createdAt": "2025-10-06T04:35:25.889Z",
+      "raw": {
+        "batch_header": {
+          "payout_batch_id": "MVC3CUGFAL8LS",
+          "batch_status": "PENDING",
+          "sender_batch_header": {
+            "sender_batch_id": "payout_club_msbtechcenter_1759725325576_v5k1",
+            "email_subject": "You received a payout from MSB Tech Center",
+            "email_message": "Payout of $10.69 from MSB Tech Center"
+          }
+        },
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v1/payments/payouts/MVC3CUGFAL8LS",
+            "rel": "self",
+            "method": "GET",
+            "encType": "application/json"
+          }
+        ]
+      },
+      "initiated_by": "user_testadmin1guiacom"
+    },
+    {
+      "id": "payout_1759725373636_bks0go",
+      "club_id": "club_msbtechcenter",
+      "amount": 10,
+      "currency": "USD",
+      "receiver": "sb-2lod745118451@personal.example.com",
+      "receiver_type": "EMAIL",
+      "provider": "paypal",
+      "provider_batch_id": "GH43XUF84WH3S",
+      "status": "PENDING",
+      "createdAt": "2025-10-06T04:36:13.636Z",
+      "raw": {
+        "batch_header": {
+          "payout_batch_id": "GH43XUF84WH3S",
+          "batch_status": "PENDING",
+          "sender_batch_header": {
+            "sender_batch_id": "payout_club_msbtechcenter_1759725373355_thpp",
+            "email_subject": "You received a payout from MSB Tech Center",
+            "email_message": "Payout of $10.00 from MSB Tech Center"
+          }
+        },
+        "links": [
+          {
+            "href": "https://api.sandbox.paypal.com/v1/payments/payouts/GH43XUF84WH3S",
+            "rel": "self",
+            "method": "GET",
+            "encType": "application/json"
+          }
+        ]
+      },
+      "initiated_by": "user_testadmin1guiacom"
     }
   ]
 }

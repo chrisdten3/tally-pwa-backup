@@ -157,21 +157,6 @@ export default function PaymentsPage() {
               >
                 {submitting ? "Submitting..." : "Submit Payout"}
               </button>
-              <button
-                type="button"
-                onClick={() => {
-                  // refresh clubs
-                  setLoading(true);
-                  fetch("/api/clubs", { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" })
-                    .then((r) => (r.ok ? r.json() : Promise.reject()))
-                    .then((data) => setClubs(Array.isArray(data) ? (data as Club[]) : []))
-                    .catch(() => setMessage("Failed to refresh"))
-                    .finally(() => setLoading(false));
-                }}
-                className="text-sm text-indigo-500 hover:underline"
-              >
-                Refresh
-              </button>
             </div>
           </form>
         )}
