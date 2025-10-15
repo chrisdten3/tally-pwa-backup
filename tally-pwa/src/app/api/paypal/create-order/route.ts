@@ -1,49 +1,37 @@
 // app/api/paypal/create-order/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { getAccessToken, PAYPAL_BASE } from "@/lib/paypal";
-import fs from "fs";
-import path from "path";
-
-const DB_PATH = path.join(process.cwd(), "mock-db.json");
-function readDb() {
-  try {
-    if (!fs.existsSync(DB_PATH)) return {};
-    return JSON.parse(fs.readFileSync(DB_PATH, "utf8") || "{}");
-  } catch {
-    return {};
-  }
-}
-
-function getUserFromReq(req: NextRequest) {
-  const auth = req.headers.get("authorization") || "";
-  const token = auth.startsWith("Bearer ") ? auth.slice(7) : null;
-  if (!token || !token.startsWith("mock-token-")) return null;
-  const email = token.slice("mock-token-".length);
-  return { id: `user_${email.replace(/[^a-z0-9]/gi, "")}`, email };
-}
+import { supabaseAdmin, getUserByAccessToken } from "@/lib/supabase";
 
 export async function POST(req: NextRequest) {
   try {
-    const user = getUserFromReq(req);
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const auth = req.headers.get("authorization") || "";
+    const token = auth.startsWith("Bearer ") ? auth.slice(7) : null;
+    const authUser = await getUserByAccessToken(token ?? undefined);
+    if (!authUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { eventId } = await req.json();
     if (!eventId) return NextResponse.json({ error: "Missing eventId" }, { status: 400 });
 
-    // look up the assigned amount for this user+event in your mock DB
-    const db = readDb() as any;
-    const event = (db.club_events || []).find((e: any) => e.id === eventId);
+    // look up the assigned amount for this user+event in supabase
+    const { data: eventRows } = await supabaseAdmin.from("club_events").select("*").eq("id", eventId).limit(1);
+    const event = eventRows?.[0];
     if (!event) return NextResponse.json({ error: "Event not found" }, { status: 404 });
 
-    const assignment = (db.club_event_assignees || []).find(
-      (a: any) => a.club_event_id === eventId && a.user_id === user.id && !a.is_cancelled
-    );
+    const { data: assignmentRows } = await supabaseAdmin
+      .from("club_event_assignees")
+      .select("*")
+      .eq("club_event_id", eventId)
+      .eq("user_id", authUser.id)
+      .eq("is_cancelled", false)
+      .limit(1);
+    const assignment = assignmentRows?.[0];
     if (!assignment) return NextResponse.json({ error: "Not assigned" }, { status: 403 });
 
     const value = Number(assignment.assigned_amount).toFixed(2);
 
     const access = await getAccessToken();
-    const requestId = `create-${eventId}-${user.id}-${Date.now()}`;
+    const requestId = `create-${eventId}-${authUser.id}-${Date.now()}`;
 
     const res = await fetch(`${PAYPAL_BASE}/v2/checkout/orders`, {
       method: "POST",
@@ -77,15 +65,19 @@ export async function POST(req: NextRequest) {
 
     // persist a pending payment so we can avoid duplicate orders for the same assignment
     try {
-      db.payments_pending = db.payments_pending || [];
-      // check again for an existing pending for this assignment
-      const existing = db.payments_pending.find((p: any) => p.assignmentId === assignment.id && !p.captured);
-      if (!existing) {
-        db.payments_pending.push({ orderId: json.id, eventId, assignmentId: assignment.id, createdAt: new Date().toISOString(), captured: false });
-        fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2), "utf8");
+      const nowIso = new Date().toISOString();
+      // check for existing pending
+      const { data: existing } = await supabaseAdmin
+        .from("payments_pending")
+        .select("*")
+        .eq("assignment_id", assignment.id)
+        .eq("captured", false)
+        .limit(1);
+      if (!existing || existing.length === 0) {
+        await supabaseAdmin.from("payments_pending").insert({ order_id: json.id, event_id: eventId, assignment_id: assignment.id, created_at: nowIso, captured: false });
       }
-    } catch {
-      // ignore mock db errors
+    } catch (e) {
+      console.error("Failed to persist payments_pending in Supabase", e);
     }
 
     return NextResponse.json({ id: json.id });

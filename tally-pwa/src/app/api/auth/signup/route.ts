@@ -1,36 +1,5 @@
 import { NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
-
-type MockDB = {
-  users?: Record<string, {
-    id: string;
-    firstName: string;
-    lastName: string;
-    name: string;
-    email: string;
-  }>;
-};
-
-const DB_PATH = path.join(process.cwd(), "mock-db.json");
-
-function readDb(): MockDB {
-  try {
-    if (!fs.existsSync(DB_PATH)) return {};
-    const raw = fs.readFileSync(DB_PATH, "utf8");
-    return JSON.parse(raw || "{}") as MockDB;
-  } catch {
-    return {};
-  }
-}
-
-function writeDb(db: MockDB) {
-  try {
-    fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2), "utf8");
-  } catch {
-    // ignore write errors in mock
-  }
-}
+import { supabaseAdmin, supabaseClient } from "@/lib/supabase";
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({})) as any;
@@ -44,20 +13,36 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Password too short" }, { status: 400 });
   }
 
-  const token = `mock-token-${email}`;
-  const user = {
-    id: `user_${email.replace(/[^a-z0-9]/gi, "")}`,
-    firstName,
-    lastName,
-    name: `${firstName} ${lastName}`,
-    email,
-  };
+  try {
+    // Create auth user using service role (admin)
+    // @ts-ignore - admin API may be available depending on supabase-js version
+    const { data: createdUser, error } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+    });
+    if (error) return NextResponse.json({ error: error.message || "Signup failed" }, { status: 400 });
 
-  // persist user in mock db keyed by email
-  const db = readDb();
-  db.users = db.users || {};
-  db.users[email.toLowerCase()] = user;
-  writeDb(db);
+    const userId = createdUser?.user?.id ?? `user_${String(email).replace(/[^a-z0-9]/gi, "")}`;
 
-  return NextResponse.json({ token, user }, { status: 201 });
+    // insert profile row into users table
+    const profile = { id: userId, first_name: firstName, last_name: lastName, name: `${firstName} ${lastName}`, email };
+    await supabaseAdmin.from("users").upsert(profile);
+
+    // Sign in to return a session token for client
+    try {
+      const signIn = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (signIn.error) {
+        // return profile but warn client to sign in manually
+        return NextResponse.json({ user: profile, warning: signIn.error.message }, { status: 201 });
+      }
+      const session = signIn.data.session;
+      const user = signIn.data.user;
+      return NextResponse.json({ token: session?.access_token, user: user ?? profile }, { status: 201 });
+    } catch (e) {
+      return NextResponse.json({ user: profile }, { status: 201 });
+    }
+  } catch (e: any) {
+    return NextResponse.json({ error: e?.message || "Server error" }, { status: 500 });
+  }
 }

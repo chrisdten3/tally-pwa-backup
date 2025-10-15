@@ -1,33 +1,13 @@
 // app/api/paypal/capture-order/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { getAccessToken, PAYPAL_BASE } from "@/lib/paypal";
-import fs from "fs";
-import path from "path";
-
-const DB_PATH = path.join(process.cwd(), "mock-db.json");
-
-function readDb() {
-  try {
-    if (!fs.existsSync(DB_PATH)) return {};
-    return JSON.parse(fs.readFileSync(DB_PATH, "utf8") || "{}");
-  } catch {
-    return {};
-  }
-}
-
-function writeDb(db: any) {
-  try {
-    fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2), "utf8");
-  } catch {
-    // ignore write errors in mock env
-  }
-}
+import { supabaseAdmin, getUserByAccessToken } from "@/lib/supabase";
 
 export async function POST(req: NextRequest) {
   try {
-  const body = await req.json();
-  const orderId = body.orderId as string | undefined;
-  const eventIdFromClient = body.eventId as string | undefined;
+    const body = await req.json();
+    const orderId = body.orderId as string | undefined;
+    const eventIdFromClient = body.eventId as string | undefined;
     if (!orderId) return NextResponse.json({ error: "Missing orderId" }, { status: 400 });
 
     const access = await getAccessToken();
@@ -51,107 +31,107 @@ export async function POST(req: NextRequest) {
     const referenceEventId = json.purchase_units?.[0]?.reference_id || eventIdFromClient;
     const amountStr = capture?.amount?.value || json.purchase_units?.[0]?.amount?.value;
 
-    // Update mock DB: mark assignment as paid and increment club balance (mock)
+    // Try to update Supabase rows: find assignment, mark paid, update club balance, add ledger, mark pending
     try {
-      const db = readDb();
-      db.club_event_assignees = db.club_event_assignees || [];
-      db.clubs = db.clubs || [];
+      // Determine authenticated user if present (helps find assignment)
+      const auth = req.headers.get("authorization") || "";
+      const token = auth.startsWith("Bearer ") ? auth.slice(7) : null;
+      const authedUser = await getUserByAccessToken(token ?? undefined);
 
-      // helper: try to get authenticated user from incoming request
-      function getUserFromReq(r: NextRequest) {
-        const auth = r.headers.get("authorization") || "";
-        const token = auth.startsWith("Bearer ") ? auth.slice(7) : null;
-        if (!token || !token.startsWith("mock-token-")) return null;
-        const email = token.slice("mock-token-".length);
-        return { id: `user_${email.replace(/[^a-z0-9]/gi, "")}`, email };
-      }
-      const authedUser = getUserFromReq(req);
-
-      // mark pending payment captured if present
-      db.payments_pending = db.payments_pending || [];
-
+      // Find pending payment by order id
+      let assignment: any = null;
       if (referenceEventId) {
-        // Try to find a pending payment by this orderId and use its assignment
-        db.payments_pending = db.payments_pending || [];
-        let assignment: any = null;
-        const pending = db.payments_pending.find((p: any) => p.orderId === (capture?.id || json.id || orderId));
-        if (pending && pending.assignmentId) {
-          assignment = db.club_event_assignees.find((a: any) => a.id === pending.assignmentId && !a.is_cancelled);
+        const { data: pendingRows } = await supabaseAdmin.from("payments_pending").select("*").eq("order_id", capture?.id || json.id || orderId).limit(1);
+        const pending = pendingRows?.[0];
+        if (pending && pending.assignment_id) {
+          const { data: aRows } = await supabaseAdmin.from("club_event_assignees").select("*").eq("id", pending.assignment_id).eq("is_cancelled", false).limit(1);
+          assignment = aRows?.[0];
         }
 
-        // Prefer to match the assignment by the authenticated user (if present)
+        // prefer assignment matching authed user
         if (!assignment && authedUser) {
-          assignment = db.club_event_assignees.find((a: any) => a.club_event_id === referenceEventId && a.user_id === authedUser.id && !a.is_cancelled);
+          const { data: aRows } = await supabaseAdmin
+            .from("club_event_assignees")
+            .select("*")
+            .eq("club_event_id", referenceEventId)
+            .eq("user_id", authedUser.id)
+            .eq("is_cancelled", false)
+            .limit(1);
+          assignment = aRows?.[0];
         }
 
-        // Next try payer email from PayPal (if provided)
+        // Next try payer email from PayPal
         if (!assignment) {
           const payerEmail = json.payer?.email_address;
-          if (payerEmail && db.users && db.users[payerEmail]) {
-            const payerId = db.users[payerEmail].id;
-            assignment = db.club_event_assignees.find((a: any) => a.club_event_id === referenceEventId && a.user_id === payerId && !a.is_cancelled);
+          if (payerEmail) {
+            const { data: payerUser } = await supabaseAdmin.from("users").select("id").eq("email", payerEmail).limit(1);
+            const payerId = payerUser?.[0]?.id;
+            if (payerId) {
+              const { data: aRows } = await supabaseAdmin
+                .from("club_event_assignees")
+                .select("*")
+                .eq("club_event_id", referenceEventId)
+                .eq("user_id", payerId)
+                .eq("is_cancelled", false)
+                .limit(1);
+              assignment = aRows?.[0];
+            }
           }
         }
 
         // Fallback: first matching un-cancelled assignee
         if (!assignment) {
-          assignment = db.club_event_assignees.find((a: any) => a.club_event_id === referenceEventId && !a.is_cancelled);
+          const { data: aRows } = await supabaseAdmin.from("club_event_assignees").select("*").eq("club_event_id", referenceEventId).eq("is_cancelled", false).limit(1);
+          assignment = aRows?.[0];
         }
 
         if (assignment) {
-          assignment.is_cancelled = true; // treat as removed/paid
-          assignment.paid_at = new Date().toISOString();
-          assignment.payment_provider = "paypal";
-          assignment.payment_id = capture?.id || json.id || orderId;
+          // mark assignment cancelled/paid
+          const paidAt = new Date().toISOString();
+          const paymentId = capture?.id || json.id || orderId;
+          await supabaseAdmin.from("club_event_assignees").update({ is_cancelled: true, paid_at: paidAt, payment_provider: "paypal", payment_id: paymentId }).eq("id", assignment.id);
 
-          // increment club balance (add property balance on club)
-          const club = db.clubs.find((c: any) => c.id === assignment.club_id);
+          // increment club balance
           const increment = amountStr ? Number(amountStr) : Number(assignment.assigned_amount || 0);
+          const { data: clubRows } = await supabaseAdmin.from("clubs").select("*").eq("id", assignment.club_id).limit(1);
+          const club = clubRows?.[0];
           if (club) {
-            const prev = club.balance || 0;
-            club.balance = prev + increment;
+            const prev = Number(club.balance || 0);
+            const newBalance = prev + increment;
+            await supabaseAdmin.from("clubs").update({ balance: newBalance }).eq("id", club.id);
 
-            // ensure ledger exists and append a payment entry
-            db.ledgers = db.ledgers || [];
-            // try to resolve user info from DB
-            const usersMap: any = db.users || {};
-            const assignedUser: any = Object.values(usersMap).find((u: any) => u.id === assignment.user_id) || null;
-            const payer: any = json.payer?.email_address ? usersMap[json.payer.email_address] : null;
-
-            const completedBy = payer ? payer : assignedUser ? assignedUser : null;
+            // create ledger entry
             const ledgerEntry = {
               id: `ledger_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
               club_id: club.id,
               type: "payment",
               amount: increment,
               balance_before: prev,
-              balance_after: club.balance,
-              // entry-level user_id should be the actor who completed the payment
-              user_id: completedBy ? completedBy.id : assignment.user_id,
-              // keep assignee reference
+              balance_after: newBalance,
+              user_id: assignment.user_id,
               assignee_user_id: assignment.user_id,
-              // who actually completed the transaction (payer or assigned user)
-              completed_by_user_id: completedBy ? completedBy.id : undefined,
-              completed_by_name: completedBy ? completedBy.name : undefined,
-              completed_by_email: completedBy ? completedBy.email : undefined,
+              completed_by_user_id: authedUser?.id ?? assignment.user_id,
+              completed_by_name: authedUser?.email ?? undefined,
+              completed_by_email: authedUser?.email ?? undefined,
               event_id: referenceEventId,
               payment_provider: "paypal",
-              payment_id: assignment.payment_id,
-              createdAt: new Date().toISOString(),
+              payment_id: paymentId,
+              created_at: new Date().toISOString(),
               description: `Payment for event ${referenceEventId}`,
             };
-            db.ledgers.push(ledgerEntry);
+            await supabaseAdmin.from("ledgers").insert(ledgerEntry);
           }
-          // mark any pending payment for this assignment as captured
-          const pending = db.payments_pending.find((p: any) => p.assignmentId === assignment.id && p.orderId === (capture?.id || json.id || orderId));
-          if (pending) pending.captured = true;
 
-          writeDb(db);
+          // mark any pending payment for this assignment as captured
+          await supabaseAdmin
+            .from("payments_pending")
+            .update({ captured: true })
+            .eq("assignment_id", assignment.id)
+            .eq("order_id", capture?.id || json.id || orderId);
         }
       }
     } catch (e) {
-      // ignore DB errors in mock env but still return success to client
-      console.error("Error updating mock DB after capture:", e);
+      console.error("Error updating Supabase after capture:", e);
     }
 
     return NextResponse.json({ ...json, _dbUpdated: true });

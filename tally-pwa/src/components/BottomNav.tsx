@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { User, Users, CreditCard, CalendarDays, Settings } from "lucide-react";
@@ -48,9 +48,32 @@ export default function BottomNav() {
         // ignore
       }
 
-      if (!userId && token.startsWith("mock-token-")) {
-        const email = token.slice("mock-token-".length);
-        userId = `user_${email.replace(/[^a-z0-9]/gi, "")}`;
+      // If we don't have a cached user, call the session endpoint once to resolve it
+      // Use a ref to avoid concurrent/frequent fetches from the periodic evaluate()
+      const fetchingRef = (window as any).__bottomNavFetchingRef as { current?: boolean } | undefined;
+      if (!userId) {
+        // create a fetching ref on window if not present (shared across tabs in same window)
+        if (!fetchingRef) (window as any).__bottomNavFetchingRef = { current: false };
+        const ref = (window as any).__bottomNavFetchingRef;
+        if (!ref.current) {
+          ref.current = true;
+          fetch("/api/auth/session", { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" })
+            .then((r) => r.ok ? r.json() : null)
+            .then((data) => {
+              if (data?.user) {
+                try {
+                  localStorage.setItem("user", JSON.stringify(data.user));
+                  userId = data.user.id;
+                } catch {}
+              }
+            })
+            .catch(() => null)
+            .finally(() => {
+              ref.current = false;
+              // trigger an immediate evaluate to pick up new user
+              try { window.dispatchEvent(new Event("focus")); } catch {}
+            });
+        }
       }
 
       if (!userId) {

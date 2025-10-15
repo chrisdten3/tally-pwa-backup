@@ -73,11 +73,8 @@ export default function EventsPage() {
   const [eventsLoading, setEventsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<"assigned" | "created">("assigned");
 
-  // Prefer real token; fallback to a dev/mock
-  const token =
-    (typeof window !== "undefined" && localStorage.getItem("token")) ||
-    process.env.NEXT_PUBLIC_DEV_AUTH_TOKEN ||
-    "mock-token-maggie.xinheshen@gmail.com";
+  // Prefer real token; optional dev token if set in environment
+  const token = (typeof window !== "undefined" && localStorage.getItem("token")) || process.env.NEXT_PUBLIC_DEV_AUTH_TOKEN || null;
 
   // Fetch events on mount
   useEffect(() => {
@@ -644,7 +641,7 @@ export default function EventsPage() {
         {activePayEvent && (
           <PayChoiceModal
             event={activePayEvent}
-            authToken={token}
+            authToken={token ?? ""}
             onClose={() => setActivePayEvent(null)}
             onPaid={async () => {
               setActivePayEvent(null);

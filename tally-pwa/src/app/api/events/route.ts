@@ -1,167 +1,69 @@
 import { NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
+import { supabaseAdmin, getUserByAccessToken } from "@/lib/supabase";
 
 type MembershipRole = "admin" | "member";
 
-type MockDB = {
-  clubs?: Array<{ id: string; name: string; email: string; description: string; createdAt: string }>;
-  memberships?: Record<string, Record<string, MembershipRole> | string[]>; // userId -> { clubId: role } | legacy string[]
-  users?: Record<string, { id: string; firstName: string; lastName: string; name: string; email: string }>;
-  club_events?: Array<{
-    id: string;
-    author_id: string;
-    club_id: string;
-    title: string;
-    description: string;
-    amount: number;
-    createdAt: string;
-    expires_at: string | null;
-  }>;
-  club_event_assignees?: Array<{
-    id: string;
-    club_event_id: string;
-    club_id: string;
-    user_id: string;
-    assigned_amount: number;
-    role_at_assign: MembershipRole;
-    assigned_by: string;
-    assigned_at: string;
-    is_waived: boolean;
-    is_cancelled: boolean;
-  }>;
-};
-
-const DB_PATH = path.join(process.cwd(), "mock-db.json");
-
-function readDb(): MockDB {
-  try {
-    if (!fs.existsSync(DB_PATH)) return {};
-    const raw = fs.readFileSync(DB_PATH, "utf8");
-    return JSON.parse(raw || "{}") as MockDB;
-  } catch {
-    return {} as MockDB;
-  }
-}
-
-function writeDb(db: MockDB) {
-  try {
-    fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2), "utf8");
-  } catch {
-    // ignore write errors in mock env
-  }
-}
-
-function getUserFromReq(req: Request) {
-  const auth = req.headers.get("authorization") || "";
-  const token = auth.startsWith("Bearer ") ? auth.slice(7) : null;
-  if (!token || !token.startsWith("mock-token-")) return null;
-  const email = token.slice("mock-token-".length);
-  return { id: `user_${email.replace(/[^a-z0-9]/gi, "")}`, email };
-}
-
-function getRole(db: MockDB, userId: string, clubId: string): MembershipRole | null {
-  const entry = db.memberships?.[userId];
-  if (!entry) return null;
-  if (Array.isArray(entry)) {
-    return entry.includes(clubId) ? "member" : null;
-  }
-  const map = entry as Record<string, MembershipRole>;
-  return (map[clubId] as MembershipRole) ?? null;
-}
-
 export async function GET(req: Request) {
   try {
-    const user = getUserFromReq(req);
-    if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    const auth = req.headers.get("authorization") || "";
+    const token = auth.startsWith("Bearer ") ? auth.slice(7) : null;
+    const authUser = await getUserByAccessToken(token ?? undefined);
+    if (!authUser) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
-    const db = readDb();
-    const events = db.club_events || [];
-    const assignees = db.club_event_assignees || [];
-    const clubs = db.clubs || [];
-    const users = db.users || {};
+    // fetch assigned events for user
+    const { data: assignments } = await supabaseAdmin
+      .from("club_event_assignees")
+      .select("*, club_events(*)")
+      .eq("user_id", authUser.id)
+      .eq("is_cancelled", false);
 
-    // Helper to get club name
-    const getClubName = (clubId: string) => {
-      const club = clubs.find(c => c.id === clubId);
-      return club?.name || clubId;
-    };
-
-    // Helper to get user name
-    const getUserName = (userId: string) => {
-      const user = Object.values(users).find(u => u.id === userId);
-      return user?.name || userId;
-    };
-
-    // Get events assigned to current user
-    const assignedEvents = assignees
-      .filter(a => a.user_id === user.id && !a.is_cancelled)
-      .map(assignment => {
-        const event = events.find(e => e.id === assignment.club_event_id);
-        if (!event) return null;
-        
-        return {
-          id: event.id,
-          title: event.title,
-          description: event.description,
-          amount: assignment.assigned_amount,
-          createdAt: event.createdAt,
-          expires_at: event.expires_at,
-          club: {
-            id: event.club_id,
-            name: getClubName(event.club_id)
-          },
-          assignment: {
-            assigned_by: assignment.assigned_by,
-            assigned_by_name: getUserName(assignment.assigned_by),
-            assigned_at: assignment.assigned_at,
-            is_waived: assignment.is_waived,
-            is_cancelled: assignment.is_cancelled,
-            role_at_assign: assignment.role_at_assign
-          }
-        };
-      })
-      .filter(Boolean);
-
-    // Get events created by current user
-    const createdEvents = events
-      .filter(e => e.author_id === user.id)
-      .map(event => {
-        const eventAssignees = assignees.filter(a => a.club_event_id === event.id);
-        const stats = {
-          assigneeCount: eventAssignees.length,
-          cancelledCount: eventAssignees.filter(a => a.is_cancelled).length,
-          waivedCount: eventAssignees.filter(a => a.is_waived).length
-        };
-
-        return {
-          id: event.id,
-          title: event.title,
-          description: event.description,
-          amount: event.amount,
-          createdAt: event.createdAt,
-          expires_at: event.expires_at,
-          club: {
-            id: event.club_id,
-            name: getClubName(event.club_id)
-          },
-          stats
-        };
-      });
-
-    return NextResponse.json({
-      assigned: assignedEvents,
-      created: createdEvents
+    const assigned = (assignments || []).map((a: any) => {
+      const event = a.club_events;
+      return {
+        id: event.id,
+        title: event.title,
+        description: event.description,
+        amount: a.assigned_amount,
+        createdAt: event.created_at || event.createdAt,
+        expires_at: event.expires_at,
+        club: { id: event.club_id, name: event.club_id }, // club name can be joined if needed
+        assignment: {
+          assigned_by: a.assigned_by,
+          assigned_by_name: a.assigned_by,
+          assigned_at: a.assigned_at,
+          is_waived: a.is_waived,
+          is_cancelled: a.is_cancelled,
+          role_at_assign: a.role_at_assign,
+        },
+      };
     });
-  } catch {
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+
+    // fetch events created by current user
+    const { data: createdEvents } = await supabaseAdmin.from("club_events").select("*").eq("author_id", authUser.id);
+
+    const created = (createdEvents || []).map((event: any) => ({
+      id: event.id,
+      title: event.title,
+      description: event.description,
+      amount: event.amount,
+      createdAt: event.created_at || event.createdAt,
+      expires_at: event.expires_at,
+      club: { id: event.club_id, name: event.club_id },
+      stats: {},
+    }));
+
+    return NextResponse.json({ assigned, created });
+  } catch (e: any) {
+    return NextResponse.json({ error: e?.message || "Server error" }, { status: 500 });
   }
 }
 
 export async function POST(req: Request) {
   try {
-    const user = getUserFromReq(req);
-    if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    const auth = req.headers.get("authorization") || "";
+    const token = auth.startsWith("Bearer ") ? auth.slice(7) : null;
+    const authUser = await getUserByAccessToken(token ?? undefined);
+    if (!authUser) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
     const body = (await req.json().catch(() => ({}))) as Partial<{
       clubId: string;
@@ -177,15 +79,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    const db = readDb();
-    db.club_events = db.club_events || [];
-    db.club_event_assignees = db.club_event_assignees || [];
-    db.memberships = db.memberships || {};
-
-    const role = getRole(db, user.id, clubId);
-    if (role !== "admin") {
-      return NextResponse.json({ error: "Only admins can create events" }, { status: 403 });
-    }
+    // check role of creator
+    const { data: membershipRows } = await supabaseAdmin
+      .from("memberships")
+      .select("role")
+      .eq("club_id", clubId)
+      .eq("user_id", authUser.id)
+      .limit(1);
+    const role = membershipRows?.[0]?.role;
+    if (role !== "admin") return NextResponse.json({ error: "Only admins can create events" }, { status: 403 });
 
     const nowIso = new Date().toISOString();
     const slug = String(title).replace(/[^a-z0-9]/gi, "").toLowerCase();
@@ -193,37 +95,35 @@ export async function POST(req: Request) {
 
     const event = {
       id: eventId,
-      author_id: user.id,
+      author_id: authUser.id,
       club_id: clubId,
       title: String(title),
       description: String(description || ""),
       amount: Math.trunc(Number(amount)),
-      createdAt: nowIso,
+      created_at: nowIso,
       expires_at: expiresAt ? String(expiresAt) : null,
     };
 
-    db.club_events.push(event);
+    await supabaseAdmin.from("club_events").insert(event);
 
-    for (const uid of assigneeUserIds) {
-      const assigneeRole = getRole(db, uid, clubId) || "member";
-      db.club_event_assignees.push({
-        id: `assign_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-        club_event_id: eventId,
-        club_id: clubId,
-        user_id: uid,
-        assigned_amount: event.amount,
-        role_at_assign: assigneeRole,
-        assigned_by: user.id,
-        assigned_at: nowIso,
-        is_waived: false,
-        is_cancelled: false,
-      });
-    }
+    const assigneesToInsert = assigneeUserIds.map((uid) => ({
+      id: `assign_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      club_event_id: eventId,
+      club_id: clubId,
+      user_id: uid,
+      assigned_amount: event.amount,
+      role_at_assign: "member",
+      assigned_by: authUser.id,
+      assigned_at: nowIso,
+      is_waived: false,
+      is_cancelled: false,
+    }));
 
-    writeDb(db);
+    if (assigneesToInsert.length) await supabaseAdmin.from("club_event_assignees").insert(assigneesToInsert);
+
     return NextResponse.json({ event }, { status: 201 });
-  } catch {
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  } catch (e: any) {
+    return NextResponse.json({ error: e?.message || "Server error" }, { status: 500 });
   }
 }
 
