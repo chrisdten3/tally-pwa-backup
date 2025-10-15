@@ -3,7 +3,6 @@ import React, { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { User, Users, CreditCard, CalendarDays, Settings } from "lucide-react";
-import { getUserClubIds } from "../utils/memberships";
 
 type NavItem = {
   href: string;
@@ -82,8 +81,15 @@ export default function BottomNav() {
       }
 
       try {
-        const count = getUserClubIds(userId).length;
-        setShow(count > 0);
+        // Replace local getUserClubIds check with a server-backed check.
+        // Server should return an array of clubs for the authorized user.
+        fetch("/api/clubs", { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" })
+          .then((r) => (r.ok ? r.json() : null))
+          .then((data) => {
+            const clubs = Array.isArray(data) ? data : data?.clubs ?? [];
+            setShow(clubs.length > 0);
+          })
+          .catch(() => setShow(false));
       } catch {
         setShow(false);
       }
