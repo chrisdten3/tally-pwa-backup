@@ -82,18 +82,36 @@ function MemberModal({
       const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
       if (!token) throw new Error("Not signed in");
 
-      // Adjust to your API route if different:
-      const res = await fetch("/api/members/promote", {
-        method: "POST",
+      // Build payload with fallbacks and log it so we can inspect what is sent
+      const payload = { clubId: clubId || "", userId: (member.user_id || (member as any).id || ""), promoteTo: "admin" };
+      console.log("promote payload:", payload);
+
+      // Call existing members API (PATCH /api/members) which accepts promoteTo
+      const res = await fetch("/api/members", {
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ clubId, userId: member.user_id }),
+        body: JSON.stringify(payload),
       });
 
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || "Failed to promote");
+      // parse JSON if possible, otherwise text
+      let data: any = null;
+      try {
+        data = await res.clone().json();
+      } catch {
+        try {
+          data = await res.clone().text();
+        } catch {
+          data = null;
+        }
+      }
+
+      if (!res.ok) {
+        const msg = typeof data === "string" ? data : data?.error || JSON.stringify(data);
+        throw new Error(`Status ${res.status}: ${msg || "Failed to promote"}`);
+      }
 
       // optimistic: tell parent to set role=admin
       onPromoted(member.user_id);
@@ -105,6 +123,13 @@ function MemberModal({
   };
 
   if (!open || !member) return null;
+
+  const joinedLabel = (() => {
+    const j = member.joined_at;
+    if (!j) return "Unknown";
+    const label = fmtDate(j);
+    return label === "Invalid Date" ? "Unknown" : label.split(",")[0];
+  })();
 
   return (
     <div
@@ -149,7 +174,7 @@ function MemberModal({
         <div className="mt-4 grid gap-2 text-sm">
           <div className="flex items-center gap-2 text-zinc-400">
             <Calendar size={14} />
-            Joined <span className="text-zinc-200">{fmtDate(member.joined_at).split(",")[0]}</span>
+            Joined <span className="text-zinc-200">{joinedLabel}</span>
           </div>
           <div className="text-zinc-400">
             Role: <span className="text-zinc-200 capitalize">{member.role}</span>
@@ -436,7 +461,8 @@ export default function ClubDetailPage({ params }: { params?: { id: string } }) 
                       {/* Open modal instead of navigating */}
                       <button
                         onClick={() => {
-                          setSelected(m);
+                          // ensure selected member includes user_id (API returns id)
+                          setSelected({ ...m, user_id: (m as any).user_id || m.id, joined_at: (m as any).joined_at || "" });
                           setModalOpen(true);
                         }}
                         className="rounded-md px-3 py-1 text-xs font-medium text-indigo-300 hover:text-indigo-200"
