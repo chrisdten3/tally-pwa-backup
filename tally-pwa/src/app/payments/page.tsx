@@ -29,7 +29,9 @@ export default function PaymentsPage() {
         });
         if (!res.ok) throw new Error("Failed to load clubs");
         const data = await res.json();
-        setClubs(Array.isArray(data) ? (data as Club[]) : []);
+        // api now returns clubs with role attached
+        const arr = Array.isArray(data) ? (data as any[]) : [];
+        setClubs(arr.map((c) => ({ id: c.id, name: c.name, balance: c.balance, role: c.role })));
       } catch (e: any) {
         console.error(e);
         setMessage("Unable to load clubs");
@@ -93,7 +95,8 @@ export default function PaymentsPage() {
 
   if (loading) return <div className="p-6">Loading...</div>;
 
-  const adminClubs = clubs.filter((c) => typeof c.balance === "number");
+  // Only clubs where the user is an admin should be eligible for payouts
+  const adminClubs = clubs.filter((c: any) => (c as any).role === "admin");
 
   return (
     <main className="min-h-[70vh] flex items-center justify-center p-6">

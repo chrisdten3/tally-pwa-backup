@@ -109,9 +109,11 @@ export default function EventsPage() {
           cache: "no-store",
         });
         if (!res.ok) throw new Error("Failed to load clubs");
-        const data = (await res.json()) as Array<{ id: string; name: string }>;
-        setClubs(data);
-        if (data.length && !selectedClubId) setSelectedClubId(data[0].id);
+        const data = (await res.json()) as Array<{ id: string; name: string; role?: string }>; 
+        // only allow selecting clubs for which the user is admin when creating events
+        const adminClubs = data.filter((c) => c.role === "admin");
+        setClubs(adminClubs.map(({ id, name }) => ({ id, name })));
+        if (adminClubs.length && !selectedClubId) setSelectedClubId(adminClubs[0].id);
       } catch (e: any) {
         setError(e?.message || "Error loading clubs");
       }

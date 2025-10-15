@@ -7,12 +7,22 @@ export async function GET(req: Request) {
   const authUser = await getUserByAccessToken(token ?? undefined);
   if (!authUser) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
-  // get club ids for this user
-  const { data: memberships } = await supabaseAdmin.from("memberships").select("club_id").eq("user_id", authUser.id);
+  // get memberships (including role) for this user
+  const { data: memberships } = await supabaseAdmin
+    .from("memberships")
+    .select("club_id, role")
+    .eq("user_id", authUser.id);
   const clubIds = (memberships || []).map((m: any) => m.club_id);
 
   const { data: clubs } = await supabaseAdmin.from("clubs").select("*").in("id", clubIds || []);
-  return NextResponse.json(clubs || []);
+
+  // attach role from memberships to each club for client-side UI decisions
+  const clubsWithRole = (clubs || []).map((c: any) => {
+    const m = (memberships || []).find((mm: any) => mm.club_id === c.id);
+    return { ...(c || {}), role: m?.role || "member" };
+  });
+
+  return NextResponse.json(clubsWithRole || []);
 }
 
 export async function POST(req: Request) {
