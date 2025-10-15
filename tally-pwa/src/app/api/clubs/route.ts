@@ -35,9 +35,27 @@ export async function POST(req: Request) {
 
     const id = `club_${String(name).replace(/[^a-z0-9]/gi, "").toLowerCase()}`;
 
+    // generate a short, human-friendly join code if not provided
+    function genCode(len = 6) {
+      const chars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"; // avoid ambiguous chars
+      let s = "";
+      for (let i = 0; i < len; i++) s += chars[Math.floor(Math.random() * chars.length)];
+      return s;
+    }
+
+    let joinCode: string | null = null;
+    // attempt a few times to generate a unique join code
+    for (let attempt = 0; attempt < 6 && !joinCode; attempt++) {
+      const candidate = genCode();
+      const { data: existing } = await supabaseAdmin.from("clubs").select("id").eq("join_code", candidate).limit(1);
+      if (!existing || (Array.isArray(existing) && existing.length === 0)) {
+        joinCode = candidate;
+      }
+    }
+
     // upsert club
     const nowIso = new Date().toISOString();
-    await supabaseAdmin.from("clubs").insert({ id, name, email, description: description || "", created_at: nowIso });
+    await supabaseAdmin.from("clubs").insert({ id, name, email, description: description || "", created_at: nowIso, join_code: joinCode });
 
     // ensure membership for creator as admin
     await supabaseAdmin.from("memberships").upsert({ user_id: authUser.id, club_id: id, role: "admin" });
