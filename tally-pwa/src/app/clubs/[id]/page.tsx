@@ -135,12 +135,12 @@ function MemberModal({
     <div
       ref={overlayRef}
       onMouseDown={onOverlayClick}
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
       aria-modal="true"
       role="dialog"
     >
       <div
-        className="w-full sm:max-w-md rounded-2xl border border-zinc-800 bg-zinc-900 p-4 sm:p-5 shadow-xl"
+        className="w-full mx-4 sm:mx-0 sm:max-w-md rounded-2xl border border-zinc-800 bg-zinc-900 p-4 sm:p-5 shadow-xl"
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-4">

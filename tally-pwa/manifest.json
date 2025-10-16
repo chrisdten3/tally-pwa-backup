@@ -1,6 +1,6 @@
 {
-  "name": "PWA Next.js",
-  "short_name": "pwa-nextjs",
+  "name": "Tally - Club Financial App",
+  "short_name": "Tally",
   "theme_color": "#35155D",
   "background_color": "#ffffff",
   "display": "standalone",
