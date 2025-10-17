@@ -56,12 +56,12 @@ export async function POST(req: Request) {
       },
       items: [
         {
-          recipient_type: "EMAIL",
+          recipient_type: "PHONE",
           amount: { value: amount.toFixed(2), currency: "USD" },
           receiver: body.to,
           note: body.note || `Payout from ${club.name || "club"}`,
           sender_item_id: `item_${Date.now()}`,
-          recipient_wallet: "PAYPAL",
+          recipient_wallet: "VENMO",
         },
       ],
     };

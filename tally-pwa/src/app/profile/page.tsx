@@ -224,16 +224,6 @@ export default function ProfilePage() {
               <div className="text-xs text-zinc-400 leading-tight">{user?.email}</div>
             </div>
           </div>
-          <button
-            className="relative rounded-full p-2 hover:bg-white/5 transition"
-            aria-label="Notifications"
-            onClick={() => (window.location.href = "/notifications")}
-          >
-            <Bell size={20} />
-            <span className="absolute -right-0.5 -top-0.5 grid h-5 min-w-5 place-items-center rounded-full bg-rose-500 text-[10px] font-medium">
-              2
-            </span>
-          </button>
         </header>
 
 
