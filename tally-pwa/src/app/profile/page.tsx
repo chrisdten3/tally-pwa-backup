@@ -20,7 +20,7 @@ import {
 import { getUserClubIds } from "@/utils/memberships";
 
 type User = { id?: string | number; name?: string; email?: string } | null;
-type Club = { id?: string; name?: string; description?: string };
+type Club = { id?: string; name?: string; description?: string; color?: string; role?: string };
 
 export default function ProfilePage() {
   const [user, setUser] = useState<User>(null);
