@@ -61,7 +61,7 @@ export async function POST(req: Request) {
           receiver: body.to,
           note: body.note || `Payout from ${club.name || "club"}`,
           sender_item_id: `item_${Date.now()}`,
-          recipient_wallet: "VENMO",
+          recipient_wallet: "PAYPAL",
         },
       ],
     };
