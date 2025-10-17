@@ -15,7 +15,7 @@ const options: ReactPayPalScriptOptions = {
   clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID!, // must exist at build
   components: "buttons,funding-eligibility",
   currency: "USD",
-  buyerCountry: "US",
+  //buyerCountry: "US",
   enableFunding: "venmo",
   "data-sdk-integration-source": "integrationbuilder_sc"
 };
