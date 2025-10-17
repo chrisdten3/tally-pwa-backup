@@ -56,7 +56,7 @@ export async function POST(req: Request) {
       },
       items: [
         {
-          recipient_type: recipientType,
+          recipient_type: "PHONE",
           amount: { value: amount.toFixed(2), currency: "USD" },
           receiver: body.to,
           note: body.note || `Payout from ${club.name || "club"}`,
