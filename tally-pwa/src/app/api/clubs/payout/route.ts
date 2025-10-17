@@ -61,7 +61,7 @@ export async function POST(req: Request) {
           receiver: body.to,
           note: body.note || `Payout from ${club.name || "club"}`,
           sender_item_id: `item_${Date.now()}`,
-          recipient_wallet: "PAYPAL",
+          recipient_wallet: "VENMO",
         },
       ],
     };
@@ -96,7 +96,7 @@ export async function POST(req: Request) {
         currency: "USD",
         receiver: body.to,
         receiver_type: recipientType,
-        provider: "paypal",
+        provider: "venmo",
         provider_batch_id: json.batch_header?.payout_batch_id || null,
         status: json.batch_header?.batch_status || json.batch_header?.status || "PENDING",
         created_at: nowIso,

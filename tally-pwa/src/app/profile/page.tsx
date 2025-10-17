@@ -314,7 +314,7 @@ export default function ProfilePage() {
 
               <div className="px-6 py-4">
                 <Link
-                  href="/tasks"
+                  href="/events"
                   className="inline-flex items-center justify-center rounded-xl bg-indigo-600 text-white font-medium px-4 py-2 hover:bg-indigo-700 transition"
                 >
                   Review All Tasks <ArrowRight size={16} className="ml-2" />

@@ -76,12 +76,6 @@ export default function ClubsInvitePage() {
             ))}
           </div>
         )}
-
-        <div className="mt-6">
-          <Link href="/profile">
-            <Button variant="ghost">Back to Home</Button>
-          </Link>
-        </div>
       </div>
     </main>
   );
