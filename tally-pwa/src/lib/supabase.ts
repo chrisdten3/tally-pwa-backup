@@ -12,7 +12,6 @@ if (!SUPABASE_ANON_KEY) {
   // Allow server-only usage when anon key isn't present in env for server-side only setups
   // but warn in development.
   if (process.env.NODE_ENV === "development") {
-    // eslint-disable-next-line no-console
     console.warn("Warning: NEXT_PUBLIC_SUPABASE_ANON_KEY / SUPABASE_ANON_KEY not set");
   }
 }
@@ -49,7 +48,6 @@ export async function getUserByAccessToken(token?: string) {
     // @ts-ignore
     return resp?.data?.user ?? null;
   } catch (err) {
-    // eslint-disable-next-line no-console
     console.error("Error verifying Supabase token", err);
     return null;
   }

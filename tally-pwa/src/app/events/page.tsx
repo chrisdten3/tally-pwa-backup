@@ -169,7 +169,7 @@ export default function EventsPage() {
   };
 
   const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString();
-  const formatCurrency = (amount: number) =>
+  const _formatCurrency = (amount: number) =>
     new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount);
 
   const reset = () => {

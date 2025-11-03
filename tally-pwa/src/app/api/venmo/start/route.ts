@@ -15,7 +15,6 @@ async function getAccessToken() {
     // @ts-ignore
     next: { revalidate: 0 },
     // Basic auth per PayPal spec
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     headers: {
       Authorization: "Basic " + Buffer.from(`${client}:${secret}`).toString("base64"),
