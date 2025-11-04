@@ -29,11 +29,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false }, { status: 400 });
     }
 
-    const event = verifyPayload.webhook_event;
+    const _event = verifyPayload.webhook_event;
     // Handle events you care about:
     // - CHECKOUT.ORDER.APPROVED
     // - PAYMENT.CAPTURE.COMPLETED / DENIED / REFUNDED
-    // Use event.resource to update your ledger atomically.
+    // Use _event.resource to update your ledger atomically.
 
     return NextResponse.json({ ok: true });
   } catch (e: any) {

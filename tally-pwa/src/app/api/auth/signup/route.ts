@@ -39,7 +39,7 @@ export async function POST(req: Request) {
       const session = signIn.data.session;
       const user = signIn.data.user;
       return NextResponse.json({ token: session?.access_token, user: user ?? profile }, { status: 201 });
-    } catch (e) {
+    } catch {
       return NextResponse.json({ user: profile }, { status: 201 });
     }
   } catch (e: any) {

@@ -5,17 +5,9 @@ import Button from "@/components/Button";
 import {
   Users,
   UserPlus,
-  ChevronLeft,
-  ChevronRight,
-  Bell,
   DollarSign,
-  Calendar as CalendarIcon,
-  CreditCard,
   Activity as ActivityIcon,
-  ChevronRightCircle,
   ArrowRight,
-  CheckCircle2,
-  AlertCircle,
 } from "lucide-react";
 import { getUserClubIds } from "@/utils/memberships";
 
@@ -27,7 +19,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [clubsCount, setClubsCount] = useState<number | null>(null);
   const [clubs, setClubs] = useState<Club[]>([]);
-  const [celebrate, setCelebrate] = useState(false);
+  const [_celebrate, setCelebrate] = useState(false);
   const [activeClubId, setActiveClubId] = useState<string | null>(null);
 
   const activeClub = useMemo<Club | null>(() => {

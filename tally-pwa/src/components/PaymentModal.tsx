@@ -17,7 +17,7 @@ interface PaymentModalProps {
 
 export default function PaymentModal({ isOpen, onClose, event }: PaymentModalProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
+  const _router = useRouter();
 
   if (!isOpen) return null;
 

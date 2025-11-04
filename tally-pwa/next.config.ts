@@ -1,11 +1,16 @@
 import type { NextConfig } from "next";
 import withPWA from "next-pwa";
 
-const nextConfig = {
+const nextConfig: NextConfig = {
     reactStrictMode: true,      // Enable React strict mode for improved error handling
-    swcMinify: true,            // Enable SWC minification for improved performance
     compiler: {
         removeConsole: process.env.NODE_ENV !== "development"     // Remove console.log in production
+    },
+    // Turbopack configuration to handle PWA webpack plugins
+    turbopack: {
+        rules: {},
+        // Configure for PWA compatibility
+        resolveExtensions: ['.js', '.jsx', '.ts', '.tsx', '.json']
     }
 };
 

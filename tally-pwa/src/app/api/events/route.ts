@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin, getUserByAccessToken } from "@/lib/supabase";
 
-type MembershipRole = "admin" | "member";
-
 export async function GET(req: Request) {
   try {
     const auth = req.headers.get("authorization") || "";

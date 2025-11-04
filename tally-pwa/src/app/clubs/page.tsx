@@ -36,7 +36,7 @@ export default function ClubsPage() {
   if (loading) return <div className="p-6">Loading...</div>;
   if (!authed) return null;
 
-  const hasNoClubs = !clubs || clubs.length === 0;
+  const _hasNoClubs = !clubs || clubs.length === 0;
 
   return (
     <main className="min-h-[70vh] flex items-center justify-center p-6">
