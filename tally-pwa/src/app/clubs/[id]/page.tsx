@@ -115,6 +115,24 @@ function MemberModal({
 
       // optimistic: tell parent to set role=admin
       onPromoted(member.user_id);
+
+      // if server returned an onboarding link, redirect current browser to Stripe onboarding
+      try {
+        if (data && (data.onboarding?.url || data.onboarding)) {
+          const onboardingUrl = typeof data.onboarding === "string" ? data.onboarding : data.onboarding?.url;
+          if (onboardingUrl) {
+            window.location.href = onboardingUrl;
+            return;
+          }
+        }
+
+        // if onboarding failed server-side, surface the onboardingError to the admin
+        if (data?.onboardingError) {
+          setErr(String(data.onboardingError));
+        }
+      } catch (e) {
+        // ignore redirect failures
+      }
     } catch (e: any) {
       setErr(e?.message || "Failed to promote");
     } finally {

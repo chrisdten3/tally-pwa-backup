@@ -44,7 +44,20 @@ export default function NewClubPage() {
           if (user?.id) addUserToClubAsAdmin(String(user.id), String(data.club.id));
         }
       } catch {}
-      router.push("/profile");
+        // If the server returned an onboarding URL for Stripe, redirect the admin there to complete onboarding
+        if (data?.onboarding?.url) {
+          window.location.href = data.onboarding.url;
+          return;
+        }
+
+        // If onboarding failed server-side, surface the error to the admin so they can diagnose
+        if (data?.onboardingError) {
+          setError(String(data.onboardingError));
+          setLoading(false);
+          return;
+        }
+
+        router.push("/profile");
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       setError(msg || "Unknown error");

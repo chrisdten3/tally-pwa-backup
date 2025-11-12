@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { X, CreditCard, Wallet2, ChevronRight } from "lucide-react";
-import { PayPalButtons } from "@paypal/react-paypal-js";
 
 type AssignedEventLite = {
   id: string;
@@ -26,38 +25,25 @@ export default function PayChoiceModal({ event, authToken, onClose, onPaid }: Pr
   const amount = Number(event.amount || 0);
   const amountLabel = amount.toFixed(2);
 
-  // Reuse your existing order + capture endpoints
-  const createOrder = async () => {
-    const r = await fetch("/api/paypal/create-order", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${authToken}`,
-      },
-      body: JSON.stringify({ eventId: event.id }),
-    });
-    const j = await r.json();
-    if (!r.ok) throw new Error(j?.error || "create-order failed");
-    return j.id as string; // orderID
-  };
-
-  const onApprove = async (data: any) => {
+  // Stripe Checkout flow
+  const createStripeSession = async () => {
     setProcessing(true);
     try {
-      const r = await fetch("/api/paypal/capture-order", {
+      const res = await fetch("/api/stripe/create-session", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
-        body: JSON.stringify({ orderId: data.orderID, eventId: event.id }),
+        body: JSON.stringify({ eventId: event.id }),
       });
-      const j = await r.json();
-      if (!r.ok) throw new Error(j?.error || "capture failed");
-      // server adds _dbUpdated when it successfully updated mock DB
-      if (j._dbUpdated) {
-        onPaid?.();
+      const j = await res.json();
+      if (!res.ok) throw new Error(j?.error || "create-session failed");
+      if (j.url) {
+        window.location.href = j.url;
       } else {
-        // still call onPaid as fallback but warn
-        onPaid?.();
+        throw new Error("No session URL returned from server");
       }
+    } catch (e) {
+      console.error("Stripe session creation failed:", e);
+      alert((e as any)?.message || "Payment initiation failed");
     } finally {
       setProcessing(false);
     }
@@ -70,15 +56,9 @@ export default function PayChoiceModal({ event, authToken, onClose, onPaid }: Pr
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-lg font-semibold">{event.title}</h2>
-            <p className="text-sm text-zinc-500">
-              {event.club.name} • ${amountLabel}
-            </p>
+            <p className="text-sm text-zinc-500">{event.club.name + ' • $' + amountLabel}</p>
           </div>
-          <button
-            className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-white/10"
-            onClick={onClose}
-            aria-label="Close"
-          >
+          <button className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-white/10" onClick={onClose} aria-label="Close">
             <X size={18} />
           </button>
         </div>
@@ -96,7 +76,7 @@ export default function PayChoiceModal({ event, authToken, onClose, onPaid }: Pr
                 </div>
                 <div className="text-left">
                   <div className="text-sm font-medium">Pay with card</div>
-                  <div className="text-xs text-zinc-500">Secured via PayPal</div>
+                  <div className="text-xs text-zinc-500">Secured via Stripe</div>
                 </div>
               </div>
               <ChevronRight size={18} className="text-zinc-400" />
@@ -112,7 +92,7 @@ export default function PayChoiceModal({ event, authToken, onClose, onPaid }: Pr
                 </div>
                 <div className="text-left">
                   <div className="text-sm font-medium">Pay with Venmo</div>
-                  <div className="text-xs text-zinc-500">Opens Venmo or QR on desktop</div>
+                  <div className="text-xs text-zinc-500">Opens Venmo or QR on desktop (via Stripe)</div>
                 </div>
               </div>
               <ChevronRight size={18} className="text-zinc-400" />
@@ -120,48 +100,40 @@ export default function PayChoiceModal({ event, authToken, onClose, onPaid }: Pr
           </div>
         )}
 
-        {/* Step: Card (PayPal Smart Buttons) */}
+        {/* Step: Card (Stripe Checkout) */}
         {step === "card" && (
           <div className="mt-5">
-            <div className="text-sm text-zinc-500 mb-2">Checkout • ${amountLabel}</div>
-            <div className="rounded-xl border border-black/10 dark:border-white/10 p-3 flex justify-center">
-              <div className="opacity-90">
-                <PayPalButtons
-                  style={{ layout: "vertical", shape: "pill" }}
-                  createOrder={createOrder}
-                  onApprove={onApprove}
-                  onError={(e) => console.error(e)}
-                  forceReRender={[processing]}
-                />
+            <div className="text-sm text-zinc-500 mb-2">{`Checkout • $${amountLabel}`}</div>
+            <div className="rounded-xl border border-black/10 dark:border-white/10 p-3 flex flex-col gap-3 items-center">
+              <button
+                onClick={createStripeSession}
+                disabled={processing}
+                className="w-full bg-indigo-600 text-white py-3 px-4 rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+              >
+                {processing ? "Redirecting…" : `Pay $${amountLabel} with Card`}
+              </button>
+
+              <div className="w-full opacity-90">
+                <div className="text-center text-xs text-zinc-400 mb-2">Payment will complete on Stripe Checkout</div>
                 {processing && <div className="text-xs text-zinc-500 mt-2">Processing payment…</div>}
               </div>
             </div>
-            <button
-              onClick={() => setStep("choice")}
-              className="mt-3 text-xs text-zinc-500 hover:text-zinc-300"
-            >
+            <button onClick={() => setStep("choice")} className="mt-3 text-xs text-zinc-500 hover:text-zinc-300">
               ← choose a different method
             </button>
           </div>
         )}
 
-        {/* Step: Venmo (Smart Buttons fundingSource=venmo) */}
+        {/* Step: Venmo (redirect to Stripe Checkout) */}
         {step === "venmo" && (
           <div className="mt-5">
-            <div className="text-sm text-zinc-500 mb-2">Venmo • ${amountLabel}</div>
+            <div className="text-sm text-zinc-500 mb-2">{`Venmo • $${amountLabel}`}</div>
             <div className="rounded-xl border border-black/10 dark:border-white/10 p-3 flex justify-center">
-              <PayPalButtons
-                fundingSource="venmo"
-                style={{ layout: "vertical", shape: "pill" }}
-                createOrder={createOrder}
-                onApprove={onApprove}
-                onError={(e) => console.error(e)}
-              />
+              <button onClick={createStripeSession} className="w-full bg-sky-500 text-white py-3 px-4 rounded-lg hover:bg-sky-600">
+                {processing ? "Redirecting…" : `Pay $${amountLabel} with Venmo`}
+              </button>
             </div>
-            <button
-              onClick={() => setStep("choice")}
-              className="mt-3 text-xs text-zinc-500 hover:text-zinc-300"
-            >
+            <button onClick={() => setStep("choice")} className="mt-3 text-xs text-zinc-500 hover:text-zinc-300">
               ← choose a different method
             </button>
           </div>

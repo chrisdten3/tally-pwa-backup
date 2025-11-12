@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin, getUserByAccessToken } from "@/lib/supabase";
+import { createExpressAccount, createAccountLink } from "@/lib/stripe";
 
 type MembershipRole = "admin" | "member";
 
@@ -57,7 +58,40 @@ export async function PATCH(req: Request) {
 
     if (body.promoteTo === "admin") {
       await supabaseAdmin.from("memberships").upsert({ user_id: body.userId, club_id: body.clubId, role: "admin" });
-      return NextResponse.json({ ok: true });
+
+      // After promoting to admin, ensure the club has a Stripe Express account and return an onboarding link
+      let onboardingError: string | null = null;
+      try {
+        const { data: clubRows } = await supabaseAdmin.from("clubs").select("*").eq("id", body.clubId).limit(1);
+        const club = clubRows?.[0];
+        if (club) {
+          let stripeAccountId = club.stripe_account_id;
+          if (!stripeAccountId) {
+            const acct = await createExpressAccount({ country: "US", email: club.email || undefined });
+            stripeAccountId = acct?.id;
+            if (stripeAccountId) {
+              try {
+                await supabaseAdmin.from("clubs").update({ stripe_account_id: stripeAccountId }).eq("id", club.id);
+              } catch (e) {
+                console.error("Failed to persist stripe_account_id on promote", e);
+              }
+            }
+          }
+
+          if (stripeAccountId) {
+            const origin = (req.headers.get("x-forwarded-origin") as string) || new URL(req.url).origin;
+            const returnUrl = `${origin}/profile`;
+            const refreshUrl = `${origin}/profile`;
+            const link = await createAccountLink({ accountId: stripeAccountId, refreshUrl, returnUrl });
+            return NextResponse.json({ ok: true, onboarding: { url: link?.url || null, accountId: stripeAccountId } });
+          }
+        }
+      } catch (e: any) {
+        console.error("Stripe onboarding failed on promoteTo admin", e);
+        onboardingError = e?.message || String(e);
+      }
+
+      return NextResponse.json({ ok: true, onboardingError });
     }
 
     return NextResponse.json({ error: "Unknown action" }, { status: 400 });
