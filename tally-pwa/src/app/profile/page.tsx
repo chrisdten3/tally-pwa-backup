@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { getUserClubIds } from "@/utils/memberships";
 
-type User = { id?: string | number; name?: string; email?: string } | null;
+type User = { id?: string | number; name?: string; email?: string; stripe_account_id?: string } | null;
 type Club = { id?: string; name?: string; description?: string; color?: string; role?: string };
 
 export default function ProfilePage() {
@@ -264,6 +264,41 @@ export default function ProfilePage() {
                   <div className="text-sm text-zinc-500">Set up a new club and invite members</div>
                 </div>
               </div>
+
+              {!user?.stripe_account_id && (
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={async () => {
+                    const token = localStorage.getItem("token");
+                    if (!token) return window.location.href = "/login";
+                    try {
+                      const res = await fetch("/api/stripe/connect/onboard", {
+                        method: "POST",
+                        headers: { "Authorization": `Bearer ${token}` },
+                      });
+                      const data = await res.json();
+                      if (data?.url) {
+                        window.location.href = data.url;
+                      } else {
+                        alert(data?.error || "Failed to start onboarding");
+                      }
+                    } catch {
+                      alert("Failed to start onboarding");
+                    }
+                  }}
+                  className="rounded-xl border border-white/5 bg-zinc-900/40 p-4 flex items-center gap-4 cursor-pointer transform transition-transform duration-200 ease-out hover:-translate-y-1 hover:shadow-lg"
+                  style={{ animation: "fadeUp 420ms ease both", animationDelay: "180ms" }}
+                >
+                  <div className="w-12 h-12 flex items-center justify-center rounded-lg bg-indigo-700/20 text-indigo-300">
+                    <DollarSign size={24} />
+                  </div>
+                  <div>
+                    <div className="font-medium">Onboard for payouts</div>
+                    <div className="text-sm text-zinc-500">Set up your Stripe Express account for payouts</div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}

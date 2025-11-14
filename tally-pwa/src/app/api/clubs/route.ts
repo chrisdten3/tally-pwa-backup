@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin, getUserByAccessToken } from "@/lib/supabase";
-import { createExpressAccount, createAccountLink } from "@/lib/stripe";
 
 export async function GET(req: Request) {
   const auth = req.headers.get("authorization") || "";
@@ -70,38 +69,9 @@ export async function POST(req: Request) {
 
     // ensure membership for creator as admin
     await supabaseAdmin.from("memberships").upsert({ user_id: authUser.id, club_id: id, role: "admin" });
+
     const { data: clubRow } = await supabaseAdmin.from("clubs").select("*").eq("id", id).limit(1).maybeSingle();
-
-    // Attempt to create a Stripe Express account and onboarding link for the new club.
-    let onboardingError: string | null = null;
-    try {
-      let stripeAccountId = clubRow?.stripe_account_id;
-      if (!stripeAccountId) {
-        const acct = await createExpressAccount({ country: "US", email: clubRow?.email || undefined });
-        stripeAccountId = acct?.id;
-        if (stripeAccountId) {
-          // best-effort persist
-          try {
-            await supabaseAdmin.from("clubs").update({ stripe_account_id: stripeAccountId }).eq("id", id);
-          } catch (e) {
-            console.error("Failed to persist stripe_account_id on club creation", e);
-          }
-        }
-      }
-
-      if (stripeAccountId) {
-        const origin = (req.headers.get("x-forwarded-origin") as string) || new URL(req.url).origin;
-        const returnUrl = `${origin}/profile`;
-        const refreshUrl = `${origin}/profile`;
-        const link = await createAccountLink({ accountId: stripeAccountId, refreshUrl, returnUrl });
-        return NextResponse.json({ club: clubRow, onboarding: { url: link?.url || null, accountId: stripeAccountId } }, { status: 201 });
-      }
-    } catch (e: any) {
-      console.error("Stripe onboarding failed for new club", e);
-      onboardingError = e?.message || String(e);
-    }
-
-    return NextResponse.json({ club: clubRow, onboardingError }, { status: 201 });
+    return NextResponse.json({ club: clubRow }, { status: 201 });
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || "Server error" }, { status: 500 });
   }
