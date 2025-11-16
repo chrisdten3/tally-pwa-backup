@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, CreditCard, Wallet2, ChevronRight } from "lucide-react";
+import { X, CreditCard } from "lucide-react";
 
 type AssignedEventLite = {
   id: string;
@@ -18,9 +18,7 @@ type Props = {
   onPaid?: () => void; // called after successful capture
 };
 
-export default function PayChoiceModal({ event, authToken, onClose, onPaid }: Props) {
-  // choice -> card or venmo
-  const [step, setStep] = useState<"choice" | "card" | "venmo">("choice");
+export default function PayChoiceModal({ event, authToken, onClose, onPaid: _onPaid }: Props) {
   const [processing, setProcessing] = useState(false);
   const amount = Number(event.amount || 0);
   const amountLabel = amount.toFixed(2);
@@ -63,81 +61,34 @@ export default function PayChoiceModal({ event, authToken, onClose, onPaid }: Pr
           </button>
         </div>
 
-        {/* Step: Choice */}
-        {step === "choice" && (
-          <div className="mt-4 space-y-3">
-            <button
-              onClick={() => setStep("card")}
-              className="w-full flex items-center justify-between rounded-xl border border-black/10 dark:border-white/10 bg-transparent px-4 py-3 hover:bg-zinc-50 dark:hover:bg-white/5 transition"
-            >
-              <div className="flex items-center gap-3">
-                <div className="rounded-xl p-2 bg-indigo-600/10 text-indigo-600">
-                  <CreditCard size={18} />
-                </div>
-                <div className="text-left">
-                  <div className="text-sm font-medium">Pay with card</div>
-                  <div className="text-xs text-zinc-500">Secured via Stripe</div>
-                </div>
+        {/* Payment Section */}
+        <div className="mt-5">
+          <div className="text-sm text-zinc-500 mb-2">{`Checkout • $${amountLabel}`}</div>
+          <div className="rounded-xl border border-black/10 dark:border-white/10 p-4 flex flex-col gap-3 items-center">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="rounded-xl p-2 bg-indigo-600/10 text-indigo-600">
+                <CreditCard size={24} />
               </div>
-              <ChevronRight size={18} className="text-zinc-400" />
-            </button>
-
-            <button
-              onClick={() => setStep("venmo")}
-              className="w-full flex items-center justify-between rounded-xl border border-black/10 dark:border-white/10 bg-transparent px-4 py-3 hover:bg-zinc-50 dark:hover:bg-white/5 transition"
-            >
-              <div className="flex items-center gap-3">
-                <div className="rounded-xl p-2 bg-sky-500/10 text-sky-500">
-                  <Wallet2 size={18} />
-                </div>
-                <div className="text-left">
-                  <div className="text-sm font-medium">Pay with Venmo</div>
-                  <div className="text-xs text-zinc-500">Opens Venmo or QR on desktop (via Stripe)</div>
-                </div>
-              </div>
-              <ChevronRight size={18} className="text-zinc-400" />
-            </button>
-          </div>
-        )}
-
-        {/* Step: Card (Stripe Checkout) */}
-        {step === "card" && (
-          <div className="mt-5">
-            <div className="text-sm text-zinc-500 mb-2">{`Checkout • $${amountLabel}`}</div>
-            <div className="rounded-xl border border-black/10 dark:border-white/10 p-3 flex flex-col gap-3 items-center">
-              <button
-                onClick={createStripeSession}
-                disabled={processing}
-                className="w-full bg-indigo-600 text-white py-3 px-4 rounded-lg hover:bg-indigo-700 disabled:opacity-50"
-              >
-                {processing ? "Redirecting…" : `Pay $${amountLabel} with Card`}
-              </button>
-
-              <div className="w-full opacity-90">
-                <div className="text-center text-xs text-zinc-400 mb-2">Payment will complete on Stripe Checkout</div>
-                {processing && <div className="text-xs text-zinc-500 mt-2">Processing payment…</div>}
+              <div className="text-left">
+                <div className="text-sm font-medium">Pay with Stripe</div>
+                <div className="text-xs text-zinc-500">Secure card payment</div>
               </div>
             </div>
-            <button onClick={() => setStep("choice")} className="mt-3 text-xs text-zinc-500 hover:text-zinc-300">
-              ← choose a different method
+            
+            <button
+              onClick={createStripeSession}
+              disabled={processing}
+              className="w-full bg-indigo-600 text-white py-3 px-4 rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+            >
+              {processing ? "Redirecting…" : `Pay $${amountLabel}`}
             </button>
-          </div>
-        )}
 
-        {/* Step: Venmo (redirect to Stripe Checkout) */}
-        {step === "venmo" && (
-          <div className="mt-5">
-            <div className="text-sm text-zinc-500 mb-2">{`Venmo • $${amountLabel}`}</div>
-            <div className="rounded-xl border border-black/10 dark:border-white/10 p-3 flex justify-center">
-              <button onClick={createStripeSession} className="w-full bg-sky-500 text-white py-3 px-4 rounded-lg hover:bg-sky-600">
-                {processing ? "Redirecting…" : `Pay $${amountLabel} with Venmo`}
-              </button>
+            <div className="w-full opacity-90">
+              <div className="text-center text-xs text-zinc-400 mb-2">Payment will complete on Stripe Checkout</div>
+              {processing && <div className="text-xs text-zinc-500 mt-2">Processing payment…</div>}
             </div>
-            <button onClick={() => setStep("choice")} className="mt-3 text-xs text-zinc-500 hover:text-zinc-300">
-              ← choose a different method
-            </button>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

@@ -29,19 +29,19 @@ export async function POST(req: NextRequest) {
           let assignment: any = null;
 
           if (pending && pending.assignment_id) {
-            const { data: aRows } = await supabaseAdmin.from("club_event_assignees").select("*").eq("id", pending.assignment_id).eq("is_cancelled", false).limit(1);
+            const { data: aRows } = await supabaseAdmin.from("club_event_assignees").select("*").eq("id", pending.assignment_id).eq("is_cancelled", false).is("paid_at", null).limit(1);
             assignment = aRows?.[0];
           }
 
           // fallback: try metadata on session
           if (!assignment && session?.metadata?.assignment_id) {
-            const { data: aRows } = await supabaseAdmin.from("club_event_assignees").select("*").eq("id", session.metadata.assignment_id).eq("is_cancelled", false).limit(1);
+            const { data: aRows } = await supabaseAdmin.from("club_event_assignees").select("*").eq("id", session.metadata.assignment_id).eq("is_cancelled", false).is("paid_at", null).limit(1);
             assignment = aRows?.[0];
           }
 
           // another fallback: event_id in metadata
           if (!assignment && session?.metadata?.event_id) {
-            const { data: aRows } = await supabaseAdmin.from("club_event_assignees").select("*").eq("club_event_id", session.metadata.event_id).eq("is_cancelled", false).limit(1);
+            const { data: aRows } = await supabaseAdmin.from("club_event_assignees").select("*").eq("club_event_id", session.metadata.event_id).eq("is_cancelled", false).is("paid_at", null).limit(1);
             assignment = aRows?.[0];
           }
 
@@ -49,7 +49,8 @@ export async function POST(req: NextRequest) {
             const paidAt = new Date().toISOString();
             const paymentId = paymentIntent || sessionId;
 
-            await supabaseAdmin.from("club_event_assignees").update({ is_cancelled: true, paid_at: paidAt, payment_provider: "stripe", payment_id: paymentId }).eq("id", assignment.id);
+            // Mark assignment as paid (keep is_cancelled as false since this is a successful payment)
+            await supabaseAdmin.from("club_event_assignees").update({ paid_at: paidAt, payment_provider: "stripe", payment_id: paymentId }).eq("id", assignment.id);
 
             const increment = Number(assignment.assigned_amount || 0);
             const { data: clubRows } = await supabaseAdmin.from("clubs").select("*").eq("id", assignment.club_id).limit(1);

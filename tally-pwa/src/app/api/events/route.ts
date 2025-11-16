@@ -8,12 +8,13 @@ export async function GET(req: Request) {
     const authUser = await getUserByAccessToken(token ?? undefined);
     if (!authUser) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
-    // fetch assigned events for user
+    // fetch assigned events for user (only unpaid and not cancelled)
     const { data: assignments } = await supabaseAdmin
       .from("club_event_assignees")
       .select("*, club_events(*)")
       .eq("user_id", authUser.id)
-      .eq("is_cancelled", false);
+      .eq("is_cancelled", false)
+      .is("paid_at", null);
 
     const assigned = (assignments || []).map((a: any) => {
       const event = a.club_events;

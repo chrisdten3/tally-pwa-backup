@@ -22,9 +22,10 @@ export async function POST(req: NextRequest) {
       .eq("club_event_id", eventId)
       .eq("user_id", authUser.id)
       .eq("is_cancelled", false)
+      .is("paid_at", null)
       .limit(1);
     const assignment = assignmentRows?.[0];
-    if (!assignment) return NextResponse.json({ error: "Not assigned" }, { status: 403 });
+    if (!assignment) return NextResponse.json({ error: "Not assigned or already paid" }, { status: 403 });
 
     const amount = Number(assignment.assigned_amount || 0);
     const amountCents = stripeLib.amountToCents(amount);
@@ -36,7 +37,7 @@ export async function POST(req: NextRequest) {
         const forwardedHost = req.headers.get("x-forwarded-host");
         const forwardedProto = req.headers.get("x-forwarded-proto") || req.headers.get("x-forwarded-protocol");
         if (forwardedHost) return `${forwardedProto || "https"}://${forwardedHost}`;
-      } catch (e) {
+      } catch {
         // ignore
       }
       return new URL(req.url).origin;

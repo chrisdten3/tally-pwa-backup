@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
         const { data: pendingRows } = await supabaseAdmin.from("payments_pending").select("*").eq("order_id", capture?.id || json.id || orderId).limit(1);
         const pending = pendingRows?.[0];
         if (pending && pending.assignment_id) {
-          const { data: aRows } = await supabaseAdmin.from("club_event_assignees").select("*").eq("id", pending.assignment_id).eq("is_cancelled", false).limit(1);
+          const { data: aRows } = await supabaseAdmin.from("club_event_assignees").select("*").eq("id", pending.assignment_id).eq("is_cancelled", false).is("paid_at", null).limit(1);
           assignment = aRows?.[0];
         }
 
@@ -81,15 +81,15 @@ export async function POST(req: NextRequest) {
 
         // Fallback: first matching un-cancelled assignee
         if (!assignment) {
-          const { data: aRows } = await supabaseAdmin.from("club_event_assignees").select("*").eq("club_event_id", referenceEventId).eq("is_cancelled", false).limit(1);
+          const { data: aRows } = await supabaseAdmin.from("club_event_assignees").select("*").eq("club_event_id", referenceEventId).eq("is_cancelled", false).is("paid_at", null).limit(1);
           assignment = aRows?.[0];
         }
 
         if (assignment) {
-          // mark assignment cancelled/paid
+          // mark assignment as paid (keep is_cancelled as false since this is a successful payment)
           const paidAt = new Date().toISOString();
           const paymentId = capture?.id || json.id || orderId;
-          await supabaseAdmin.from("club_event_assignees").update({ is_cancelled: true, paid_at: paidAt, payment_provider: "paypal", payment_id: paymentId }).eq("id", assignment.id);
+          await supabaseAdmin.from("club_event_assignees").update({ paid_at: paidAt, payment_provider: "paypal", payment_id: paymentId }).eq("id", assignment.id);
 
           // increment club balance
           const increment = amountStr ? Number(amountStr) : Number(assignment.assigned_amount || 0);

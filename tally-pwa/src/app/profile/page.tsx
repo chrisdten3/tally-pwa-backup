@@ -364,6 +364,38 @@ export default function ProfilePage() {
                 <div className="text-sm text-zinc-400">Add members</div>
               </Link>
 
+              {!user?.stripe_account_id && (
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={async () => {
+                    const token = localStorage.getItem("token");
+                    if (!token) return window.location.href = "/login";
+                    try {
+                      const res = await fetch("/api/stripe/connect/onboard", {
+                        method: "POST",
+                        headers: { "Authorization": `Bearer ${token}` },
+                      });
+                      const data = await res.json();
+                      if (data?.url) {
+                        window.location.href = data.url;
+                      } else {
+                        alert(data?.error || "Failed to start onboarding");
+                      }
+                    } catch {
+                      alert("Failed to start onboarding");
+                    }
+                  }}
+                  className="rounded-2xl bg-zinc-900/60 border border-white/5 p-5 hover:bg-white/5 transition cursor-pointer"
+                >
+                  <div className="h-10 w-10 rounded-xl bg-zinc-800 grid place-items-center mb-3">
+                    <DollarSign size={20} />
+                  </div>
+                  <div className="font-medium">Onboard</div>
+                  <div className="text-sm text-zinc-400">Set up payouts</div>
+                </div>
+              )}
+
             </section>
 
             {/* Upcoming Events 
