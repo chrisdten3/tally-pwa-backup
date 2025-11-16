@@ -77,7 +77,7 @@ export async function POST(req: Request) {
     const amountInCents = amountToCents(amount);
     const description = body.description || `Payout from ${club.name || "club"} to ${recipientUser.email || recipientUser.name}`;
     
-    const stripePayout = await createInstantPayout({
+    const stripeResult = await createInstantPayout({
       stripeAccountId: recipientUser.stripe_account_id,
       amountCents: amountInCents,
       currency: "usd",
@@ -98,10 +98,10 @@ export async function POST(req: Request) {
         receiver: recipientUser.email || recipientUser.id,
         receiver_type: "STRIPE_ACCOUNT",
         provider: "stripe",
-        provider_batch_id: stripePayout.id,
-        status: stripePayout.status || "pending",
+        provider_batch_id: stripeResult.id || stripeResult.payout?.id,
+        status: stripeResult.status || stripeResult.payout?.status || "pending",
         created_at: nowIso,
-        raw: stripePayout,
+        raw: stripeResult,
         initiated_by: authUser.id,
         recipient_user_id: recipientUser.id,
       });
@@ -126,7 +126,7 @@ export async function POST(req: Request) {
         created_at: nowIso,
         description,
         payout_id: payoutId,
-        provider_batch_id: stripePayout.id,
+        provider_batch_id: stripeResult.id || stripeResult.payout?.id,
         payment_provider: "stripe",
       });
 
@@ -134,9 +134,10 @@ export async function POST(req: Request) {
         ok: true,
         payout: {
           id: payoutId,
-          stripePayoutId: stripePayout.id,
+          stripePayoutId: stripeResult.id || stripeResult.payout?.id,
+          stripeTransferId: stripeResult.transfer?.id,
           amount,
-          status: stripePayout.status,
+          status: stripeResult.status || stripeResult.payout?.status,
           recipient: recipientUser.email || recipientUser.name,
           newClubBalance: newBalance,
         },
@@ -146,7 +147,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ 
         error: "Database error after payout created",
         details: "Payout was sent but failed to record in database. Please contact support.",
-        stripePayoutId: stripePayout.id,
+        stripePayoutId: stripeResult.id || stripeResult.payout?.id,
       }, { status: 500 });
     }
   } catch (e: any) {

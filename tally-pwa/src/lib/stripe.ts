@@ -160,28 +160,60 @@ export async function createInstantPayout({
   description?: string;
 }) {
   const secret = getSecret();
-  const body = new URLSearchParams();
-  body.append("amount", String(amountCents));
-  body.append("currency", currency);
-  body.append("method", "instant"); // instant payout
-  body.append("destination", stripeAccountId);
-  if (description) body.append("description", description);
+  
+  // First, create a transfer to the connected account's balance
+  const transferBody = new URLSearchParams();
+  transferBody.append("amount", String(amountCents));
+  transferBody.append("currency", currency);
+  transferBody.append("destination", stripeAccountId);
+  if (description) transferBody.append("description", description);
 
-  const res = await fetch(`${STRIPE_BASE}/v1/payouts`, {
+  const transferRes = await fetch(`${STRIPE_BASE}/v1/transfers`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${secret}`,
       "Content-Type": "application/x-www-form-urlencoded",
     },
-    body: body.toString(),
+    body: transferBody.toString(),
     cache: "no-store",
   });
-  const j = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    const msg = j?.error?.message || JSON.stringify(j) || "Stripe create payout failed";
+  const transfer = await transferRes.json().catch(() => ({}));
+  if (!transferRes.ok) {
+    const msg = transfer?.error?.message || JSON.stringify(transfer) || "Stripe transfer failed";
     throw new Error(msg);
   }
-  return j;
+
+  // Then, trigger an instant payout from the connected account to their bank
+  const payoutBody = new URLSearchParams();
+  payoutBody.append("amount", String(amountCents));
+  payoutBody.append("currency", currency);
+  payoutBody.append("method", "instant"); // instant payout
+  if (description) payoutBody.append("description", description);
+
+  const payoutRes = await fetch(`${STRIPE_BASE}/v1/payouts`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${secret}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+      "Stripe-Account": stripeAccountId, // Act on behalf of connected account
+    },
+    body: payoutBody.toString(),
+    cache: "no-store",
+  });
+  const payout = await payoutRes.json().catch(() => ({}));
+  if (!payoutRes.ok) {
+    const msg = payout?.error?.message || JSON.stringify(payout) || "Stripe payout failed";
+    throw new Error(msg);
+  }
+
+  // Return combined info
+  return {
+    transfer,
+    payout,
+    id: payout.id,
+    status: payout.status,
+    arrival_date: payout.arrival_date,
+  };
 }
 
 export default {
