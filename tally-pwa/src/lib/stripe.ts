@@ -148,10 +148,47 @@ export async function createAccountLink({ accountId, refreshUrl, returnUrl }: { 
   return j;
 }
 
+export async function createInstantPayout({
+  stripeAccountId,
+  amountCents,
+  currency = "usd",
+  description,
+}: {
+  stripeAccountId: string;
+  amountCents: number;
+  currency?: string;
+  description?: string;
+}) {
+  const secret = getSecret();
+  const body = new URLSearchParams();
+  body.append("amount", String(amountCents));
+  body.append("currency", currency);
+  body.append("method", "instant"); // instant payout
+  body.append("destination", stripeAccountId);
+  if (description) body.append("description", description);
+
+  const res = await fetch(`${STRIPE_BASE}/v1/payouts`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${secret}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: body.toString(),
+    cache: "no-store",
+  });
+  const j = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const msg = j?.error?.message || JSON.stringify(j) || "Stripe create payout failed";
+    throw new Error(msg);
+  }
+  return j;
+}
+
 export default {
   createCheckoutSession,
   verifyStripeSignature,
   amountToCents,
   createExpressAccount,
   createAccountLink,
+  createInstantPayout,
 };

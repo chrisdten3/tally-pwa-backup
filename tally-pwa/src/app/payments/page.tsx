@@ -80,21 +80,26 @@ export default function PaymentsPage() {
 
     setSubmitting(true);
     try {
-      const res = await fetch("/api/clubs/payout", {
+      const res = await fetch("/api/stripe/payout", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ clubId: selectedClubId, amount: num }),
+        body: JSON.stringify({ 
+          clubId: selectedClubId, 
+          userId: user?.id,
+          amount: num,
+          description: `Payout from ${club.name || "club"}`,
+        }),
       });
       const j = await res.json();
-      if (!res.ok) throw new Error(j?.error || "Payout failed");
-      // endpoint returns { ok: true, balance: club.balance } on success
-      const updatedBalance = typeof j.balance === "number" ? j.balance : undefined;
-      setClubs((prev) => prev.map((c) => (c.id === selectedClubId ? { ...c, balance: updatedBalance ?? (c.balance ?? 0) - num } : c)));
+      if (!res.ok) throw new Error(j?.error || j?.details || "Payout failed");
+      // endpoint returns { ok: true, payout: { newClubBalance, ... } } on success
+      const newBalance = j?.payout?.newClubBalance;
+      setClubs((prev) => prev.map((c) => (c.id === selectedClubId ? { ...c, balance: newBalance ?? (c.balance ?? 0) - num } : c)));
       setAmount("");
-      setMessage("Payout submitted");
+      setMessage(`✓ Payout of $${num.toFixed(2)} sent successfully via Stripe! New balance: $${(newBalance ?? 0).toFixed(2)}`);
     } catch (err: any) {
       setMessage(err?.message || "Error submitting payout");
     } finally {
@@ -117,7 +122,7 @@ export default function PaymentsPage() {
           <CreditCard size={28} />
         </div>
         <h1 className="mt-4 text-2xl font-semibold">Payouts</h1>
-        <p className="mt-2 text-sm text-zinc-500">Admins can withdraw club balance via Stripe.</p>
+        <p className="mt-2 text-sm text-zinc-500">Admins can withdraw club balance to their Stripe account instantly.</p>
 
         {needsOnboarding ? (
           <div className="mt-6 rounded-xl border border-amber-500/20 bg-amber-500/10 p-4">
