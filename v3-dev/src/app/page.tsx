@@ -361,10 +361,16 @@ export default function TallyLandingPage() {
           </nav>
           <div className="flex items-center gap-3">
             <a
-              href="#get-started"
-              className="inline-flex items-center gap-2 rounded-xl bg-white px-3 py-1.5 text-sm font-medium text-neutral-900 hover:bg-neutral-200"
+              href="/login"
+              className="text-sm font-medium text-neutral-300 hover:text-white"
             >
-              Get Started <ArrowRight className="h-4 w-4" />
+              Log in
+            </a>
+            <a
+              href="/signup"
+              className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-200"
+            >
+              Sign up
             </a>
           </div>
         </Section>
@@ -391,10 +397,10 @@ export default function TallyLandingPage() {
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <a
                 id="get-started"
-                href="https://www.gettally.dev"
+                href="/signup"
                 className="inline-flex items-center justify-center rounded-2xl bg-white px-5 py-3 font-medium text-neutral-900 hover:bg-neutral-200"
               >
-                Try Tally V0 →
+                Try Tally Free →
               </a>
               <button
                 onClick={openSignup}
