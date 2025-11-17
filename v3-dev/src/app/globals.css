@@ -8,8 +8,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-jetbrains-mono);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -23,4 +23,51 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Confetti for in-modal celebration */
+.confetti {
+  position: absolute;
+  top: 6px;
+  left: 0;
+  right: 0;
+  height: 200px;
+  pointer-events: none;
+}
+
+.confetti-piece {
+  position: absolute;
+  width: 10px;
+  height: 16px;
+  border-radius: 2px;
+  opacity: 0.95;
+  transform-origin: center;
+  animation: confetti-fall 1400ms ease-out forwards;
+}
+
+.confetti-piece:nth-child(1) { left: 10%; background: #ff6b6b; animation-delay: 0ms; }
+.confetti-piece:nth-child(2) { left: 20%; background: #ffd93d; animation-delay: 80ms; }
+.confetti-piece:nth-child(3) { left: 30%; background: #6be4a8; animation-delay: 140ms; }
+.confetti-piece:nth-child(4) { left: 40%; background: #6b8cff; animation-delay: 200ms; }
+.confetti-piece:nth-child(5) { left: 50%; background: #ff9f6b; animation-delay: 260ms; }
+.confetti-piece:nth-child(6) { left: 60%; background: #c86bff; animation-delay: 320ms; }
+.confetti-piece:nth-child(7) { left: 70%; background: #4de0ff; animation-delay: 380ms; }
+.confetti-piece:nth-child(8) { left: 80%; background: #ffd1f0; animation-delay: 440ms; }
+.confetti-piece:nth-child(9) { left: 15%; background: #ffe27a; animation-delay: 500ms; }
+.confetti-piece:nth-child(10) { left: 85%; background: #90f0b0; animation-delay: 560ms; }
+.confetti-piece:nth-child(11) { left: 25%; background: #ffb3c6; animation-delay: 620ms; }
+.confetti-piece:nth-child(12) { left: 75%; background: #b8d6ff; animation-delay: 680ms; }
+
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(-20px) rotate(0deg) scale(0.9);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(180px) rotate(420deg) scale(1);
+    opacity: 1;
+  }
 }
