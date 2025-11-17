@@ -26,7 +26,8 @@ export async function POST(req: Request) {
     await supabaseAdmin.from("users").update({ stripe_account_id: acct.id }).eq("id", authUser.id);
 
     return NextResponse.json({ url: link.url });
-  } catch {
+  } catch (e) {
+    console.error("Stripe onboarding error:", e instanceof Error ? e.message : e, e);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
