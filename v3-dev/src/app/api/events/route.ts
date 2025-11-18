@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin, getUserByAccessToken } from "@/lib/supabase";
+import { sendBulkSMS, formatEventNotification } from "@/lib/twilio";
 
 export async function GET(req: Request) {
   try {
@@ -119,6 +120,54 @@ export async function POST(req: Request) {
     }));
 
     if (assigneesToInsert.length) await supabaseAdmin.from("club_event_assignees").insert(assigneesToInsert);
+
+    // Send SMS notifications to assigned members
+    if (assigneeUserIds.length > 0) {
+      try {
+        // Fetch phone numbers for assigned members
+        const { data: assignedUsers } = await supabaseAdmin
+          .from("users")
+          .select("id, phone, name")
+          .in("id", assigneeUserIds);
+
+        if (assignedUsers && assignedUsers.length > 0) {
+          // Filter users with valid phone numbers
+          const usersWithPhones = assignedUsers.filter((user) => user.phone);
+
+          if (usersWithPhones.length > 0) {
+            // Get club name for the message
+            const { data: clubData } = await supabaseAdmin
+              .from("clubs")
+              .select("name")
+              .eq("id", clubId)
+              .single();
+
+            const clubName = clubData?.name || "Your Club";
+
+            // Generate payment link
+            const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+            const paymentLink = `${baseUrl}/events/${eventId}/pay`;
+
+            // Format message
+            const message = formatEventNotification({
+              eventTitle: title,
+              amount: event.amount,
+              clubName,
+              paymentLink,
+            });
+
+            // Send SMS to all assigned members
+            const phoneNumbers = usersWithPhones.map((user) => user.phone as string);
+            const smsResult = await sendBulkSMS(phoneNumbers, message);
+
+            console.log(`SMS notifications sent: ${smsResult.sent} successful, ${smsResult.failed} failed`);
+          }
+        }
+      } catch (smsError) {
+        // Log error but don't fail the event creation
+        console.error("Error sending SMS notifications:", smsError);
+      }
+    }
 
     return NextResponse.json({ event }, { status: 201 });
   } catch (e: any) {
