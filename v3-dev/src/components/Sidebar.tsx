@@ -13,6 +13,14 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
+} from "@/components/ui/select";
+import { useClub } from "@/contexts/ClubContext";
 
 type SidebarLinkProps = {
   icon: React.ComponentType<{ className?: string }>;
@@ -43,6 +51,7 @@ function SidebarLink({ icon: Icon, label, href, isActive }: SidebarLinkProps) {
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const { clubs, activeClubId, activeClub, setActiveClubId, isLoading } = useClub();
 
   return (
     <aside className="hidden w-60 border-r bg-background/60 px-4 py-4 pb-8 lg:flex lg:flex-col lg:fixed lg:h-screen lg:overflow-y-auto">
@@ -52,6 +61,30 @@ export default function Sidebar() {
         </div>
         <span className="text-base font-semibold tracking-tight">Tally</span>
       </div>
+
+      {/* Club Switcher */}
+      {!isLoading && clubs.length > 0 && (
+        <div className="mb-6 px-2">
+          <label className="text-xs font-medium text-muted-foreground mb-2 block">
+            Active Club
+          </label>
+          <Select
+            value={activeClubId || undefined}
+            onValueChange={(val: string) => setActiveClubId(val)}
+          >
+            <SelectTrigger className="w-full bg-background/80">
+              <SelectValue placeholder="Select a club" />
+            </SelectTrigger>
+            <SelectContent>
+              {clubs.map((club) => (
+                <SelectItem key={club.id} value={club.id}>
+                  {club.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       <nav className="flex flex-1 flex-col text-sm">
         <div className="space-y-1">

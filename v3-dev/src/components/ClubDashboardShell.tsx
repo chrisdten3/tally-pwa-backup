@@ -20,15 +20,9 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import {
-  Select,
-  SelectTrigger,
-  SelectContent,
-  SelectItem,
-  SelectValue,
-} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { MembersDataTable, type Member } from "@/components/MembersDataTable";
+import { useClub } from "@/contexts/ClubContext";
 
 // Types are optional but nice to have
 type Club = {
@@ -80,12 +74,7 @@ export default function ClubDashboardShell({
   recentActivity,
   members,
 }: Props) {
-  const [activeClubId, setActiveClubId] = React.useState<string | undefined>(
-    clubs[0]?.id
-  );
-
-  const activeClub =
-    clubs.find((c) => c.id === activeClubId) || clubs[0] || null;
+  const { activeClub } = useClub();
 
   const clubStats = activeClub
     ? stats[activeClub.id] || {
@@ -127,41 +116,20 @@ export default function ClubDashboardShell({
           </Button>
         </div>
 
-        {/* Club switcher row */}
-        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-muted-foreground">Viewing club</span>
-            <Select
-              value={activeClub?.id}
-              onValueChange={(val: string) => setActiveClubId(val)}
-            >
-              <SelectTrigger className="w-56 bg-background/80">
-                <SelectValue placeholder="Select a club" />
-              </SelectTrigger>
-              <SelectContent>
-                {clubs.map((club) => (
-                  <SelectItem key={club.id} value={club.id}>
-                    {club.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex gap-2">
-            <Button asChild size="sm" variant="outline">
-              <Link href="/clubs/new">
-                <PlusCircle className="mr-2 h-4 w-4" />
-                New club
-              </Link>
-            </Button>
-            <Button asChild size="sm">
-              <Link href="/events/new">
-                <CalendarDays className="mr-2 h-4 w-4" />
-                New event
-              </Link>
-            </Button>
-          </div>
+        {/* Action buttons row */}
+        <div className="mb-6 flex gap-2">
+          <Button asChild size="sm" variant="outline">
+            <Link href="/clubs/new">
+              <PlusCircle className="mr-2 h-4 w-4" />
+              New club
+            </Link>
+          </Button>
+          <Button asChild size="sm">
+            <Link href="/events/new">
+              <CalendarDays className="mr-2 h-4 w-4" />
+              New event
+            </Link>
+          </Button>
         </div>
 
         {activeClub ? (

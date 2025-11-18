@@ -3,13 +3,16 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CreditCard, DollarSign, TrendingUp } from "lucide-react";
+import { useClub } from "@/contexts/ClubContext";
 
 export default function PaymentsPage() {
+  const { activeClub } = useClub();
+
   return (
     <div className="px-4 py-6 sm:px-6 lg:px-8">
       <div className="mb-6">
         <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-          Payments
+          Payments {activeClub && `• ${activeClub.name}`}
         </p>
         <h1 className="mt-1 text-2xl font-semibold sm:text-3xl">
           Payment History

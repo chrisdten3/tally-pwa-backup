@@ -3,13 +3,16 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CalendarDays, Plus } from "lucide-react";
+import { useClub } from "@/contexts/ClubContext";
 
 export default function EventsPage() {
+  const { activeClub } = useClub();
+
   return (
     <div className="px-4 py-6 sm:px-6 lg:px-8">
       <div className="mb-6">
         <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-          Events
+          Events {activeClub && `• ${activeClub.name}`}
         </p>
         <div className="mt-1 flex items-center justify-between">
           <h1 className="text-2xl font-semibold sm:text-3xl">
