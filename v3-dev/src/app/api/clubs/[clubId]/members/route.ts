@@ -37,6 +37,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ clubId: 
         users (
           id,
           name,
+          first_name,
+          last_name,
           email,
           phone,
           stripe_onboarded
@@ -69,6 +71,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ clubId: 
     const members = (memberships || []).map((m: any) => ({
       id: m.users.id,
       name: m.users.name,
+      firstName: m.users.first_name,
+      lastName: m.users.last_name,
       email: m.users.email,
       phone: m.users.phone,
       role: m.role,

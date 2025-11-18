@@ -50,15 +50,19 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ eve
       
       // Update user name if it has changed
       const fullName = `${firstName} ${lastName}`;
-      if (user.name !== fullName || (email && user.email !== email)) {
+      if (user.name !== fullName || user.first_name !== firstName || user.last_name !== lastName || (email && user.email !== email)) {
         await supabaseAdmin
           .from("users")
           .update({ 
             name: fullName,
+            first_name: firstName,
+            last_name: lastName,
             ...(email && { email })
           })
           .eq("id", user.id);
         user.name = fullName;
+        user.first_name = firstName;
+        user.last_name = lastName;
         if (email) user.email = email;
       }
     } else {
@@ -67,6 +71,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ eve
       const newUser = {
         id: userId,
         name: `${firstName} ${lastName}`,
+        first_name: firstName,
+        last_name: lastName,
         phone: phone,
         email: email || null,
         created_at: new Date().toISOString(),

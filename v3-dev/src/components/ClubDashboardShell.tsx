@@ -73,6 +73,37 @@ export default function ClubDashboardShell({ userName }: Props) {
   const [members, setMembers] = React.useState<Member[]>([]);
   const [loading, setLoading] = React.useState(true);
 
+  const refreshData = React.useCallback(() => {
+    if (!activeClub?.id) return;
+
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    Promise.all([
+      fetch(`/api/clubs/${activeClub.id}/stats`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }).then((r) => r.json()),
+      fetch(`/api/clubs/${activeClub.id}/members`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }).then((r) => r.json()),
+    ])
+      .then(([statsData, membersData]) => {
+        if (statsData?.stats) {
+          setStats(statsData.stats);
+        }
+        if (statsData?.recentActivity) {
+          setRecentActivity(statsData.recentActivity);
+        }
+        if (statsData?.actionItems) {
+          setActionItems(statsData.actionItems);
+        }
+        if (membersData?.members) {
+          setMembers(membersData.members);
+        }
+      })
+      .catch((err) => console.error("Failed to fetch dashboard data:", err));
+  }, [activeClub?.id]);
+
   React.useEffect(() => {
     if (!activeClub?.id) return;
 
@@ -139,35 +170,7 @@ export default function ClubDashboardShell({ userName }: Props) {
               New club
             </Link>
           </Button>
-          <CreateEventModal onEventCreated={() => {
-            // Refresh dashboard data when event is created
-            if (activeClub?.id) {
-              const token = localStorage.getItem("token");
-              if (!token) return;
-              
-              Promise.all([
-                fetch(`/api/clubs/${activeClub.id}/stats`, {
-                  headers: { Authorization: `Bearer ${token}` },
-                }).then(r => r.json()),
-                fetch(`/api/clubs/${activeClub.id}/members`, {
-                  headers: { Authorization: `Bearer ${token}` },
-                }).then(r => r.json())
-              ]).then(([statsData, membersData]) => {
-                if (statsData?.stats) {
-                  setStats(statsData.stats);
-                }
-                if (statsData?.actionItems) {
-                  setActionItems(statsData.actionItems);
-                }
-                if (statsData?.recentActivity) {
-                  setRecentActivity(statsData.recentActivity);
-                }
-                if (membersData?.members) {
-                  setMembers(membersData.members);
-                }
-              }).catch(err => console.error("Failed to refresh data:", err));
-            }
-          }} />
+          <CreateEventModal onEventCreated={refreshData} />
         </div>
 
         {activeClub ? (
@@ -177,6 +180,7 @@ export default function ClubDashboardShell({ userName }: Props) {
             actionItems={actionItems}
             recentActivity={recentActivity}
             members={members}
+            onRefreshData={refreshData}
           />
         ) : (
           <EmptyState />
@@ -193,12 +197,14 @@ function ClubDashboard({
   actionItems,
   recentActivity,
   members,
+  onRefreshData,
 }: {
   club: Club;
   stats: { totalMembers: number; balance: number; upcomingDue?: number };
   actionItems: ActionItem[];
   recentActivity: Activity[];
   members: Member[];
+  onRefreshData: () => void;
 }) {
   return (
     <div className="space-y-6">
@@ -356,13 +362,61 @@ function ClubDashboard({
         <MembersDataTable
           members={members}
           clubId={club.id}
-          onAddMember={(member) => {
-            console.log("Add member:", member);
-            // TODO: Implement API call to add member
+          onAddMember={async (member) => {
+            const token = localStorage.getItem("token");
+            if (!token) return;
+
+            try {
+              const response = await fetch(`/api/clubs/${club.id}/members/add`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify(member),
+              });
+
+              const data = await response.json();
+
+              if (!response.ok) {
+                throw new Error(data.error || "Failed to add member");
+              }
+
+              // Refresh members list
+              onRefreshData();
+
+              alert("Member added successfully!");
+            } catch (error) {
+              console.error("Failed to add member:", error);
+              alert(error instanceof Error ? error.message : "Failed to add member");
+            }
           }}
-          onDeleteMember={(memberId) => {
-            console.log("Delete member:", memberId);
-            // TODO: Implement API call to delete member
+          onDeleteMember={async (memberId) => {
+            const token = localStorage.getItem("token");
+            if (!token) return;
+
+            try {
+              const response = await fetch(
+                `/api/clubs/${club.id}/members?userId=${memberId}`,
+                {
+                  method: "DELETE",
+                  headers: { Authorization: `Bearer ${token}` },
+                }
+              );
+
+              if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || "Failed to delete member");
+              }
+
+              // Refresh members list
+              onRefreshData();
+
+              alert("Member removed successfully!");
+            } catch (error) {
+              console.error("Failed to delete member:", error);
+              alert(error instanceof Error ? error.message : "Failed to remove member");
+            }
           }}
           onSendReminder={(memberId) => {
             console.log("Send reminder to:", memberId);
