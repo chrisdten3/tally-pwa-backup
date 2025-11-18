@@ -220,7 +220,7 @@ export default function HomePage() {
             {/* Create Club Card - only show if user has no clubs */}
             {!hasClubs && (
               <Link href="/clubs/new">
-                <div className="group cursor-pointer rounded-3xl border border-zinc-800 bg-zinc-950/80 p-8 transition-all hover:border-[#5A43FF] hover:bg-zinc-900/90 hover:shadow-[0_0_40px_rgba(90,67,255,0.25)]">
+                <div className="group cursor-pointer rounded-3xl border border-zinc-800 bg-zinc-950/80 p-8 transition-all hover:border-bright-indigo hover:bg-zinc-900/90 hover:shadow-[0_0_40px_rgba(90,67,255,0.25)]">
                 <div className="flex flex-col items-center space-y-6 text-center">
                     <div className="grid h-24 w-24 place-items-center rounded-2xl bg-[rgba(90,67,255,0.18)] shadow-[0_0_30px_rgba(90,67,255,0.45)] transition group-hover:bg-[rgba(90,67,255,0.28)]">
                     <UserPlus size={48} className="text-white" />
@@ -232,7 +232,7 @@ export default function HomePage() {
                     </p>
                     </div>
                     <div className="pt-4">
-                    <div className="inline-flex items-center gap-2 rounded-xl bg-[#5A43FF] px-8 py-3 text-base font-semibold text-white shadow-[0_0_24px_rgba(90,67,255,0.35)] transition group-hover:bg-[#6C57FF]">
+                    <div className="inline-flex items-center gap-2 rounded-xl bg-bright-indigo px-8 py-3 text-base font-semibold text-white shadow-[0_0_24px_rgba(90,67,255,0.35)] transition group-hover:bg-[#6C57FF]">
                         Create Club
                         <ArrowRight size={18} />
                     </div>
@@ -266,9 +266,9 @@ export default function HomePage() {
                 className="group cursor-pointer rounded-3xl border border-zinc-800 bg-zinc-950/80 p-8 transition-all hover:border-[#47E6B1] hover:bg-zinc-900/90 hover:shadow-[0_0_40px_rgba(71,230,177,0.25)]"
               >
                 <div className="flex flex-col items-center space-y-6 text-center">
-                <div className="grid h-24 w-24 place-items-center rounded-2xl bg-[rgba(71,230,177,0.16)] p-4 shadow-[0_0_26px_rgba(71,230,177,0.4)] transition group-hover:bg-[rgba(71,230,177,0.24)]">
+                <div className="grid h-24 w-24 place-items-center rounded-2xl bg-[rgba(71,230,177,0.16)] p-4 shadow-[0_0_26px_rgba(71,230,177,0.4)] transition group-hover:bg-mint-leaf">
                     <Image
-                    src="/stripe.png"
+                    src="/icons8-stripe-100.png"
                     alt="Stripe"
                     width={80}
                     height={80}
@@ -299,21 +299,6 @@ export default function HomePage() {
           <ClubDashboardShell
             userName={user?.name?.split(" ")[0] || "User"}
           />
-        )}
-
-        {/* Sign Out - Only show during onboarding */}
-        {(!hasClubs || needsStripeOnboarding) && (
-          <div className="pt-6 text-center">
-            <Button
-              onClick={() => {
-                localStorage.removeItem("token");
-                window.location.href = "/login";
-              }}
-              variant="ghost"
-            >
-              Sign out
-            </Button>
-          </div>
         )}
       </div>
   );

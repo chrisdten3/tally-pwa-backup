@@ -77,11 +77,11 @@ export function EventDetailsModal({ event, open, onOpenChange }: EventDetailsMod
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Amount Due</p>
-                <p className="text-3xl font-bold text-emerald-600">
+                <p className="text-3xl font-bold text-mint-leaf">
                   ${(event.amount / 100).toFixed(2)}
                 </p>
               </div>
-              <DollarSign className="h-8 w-8 text-emerald-600" />
+              <DollarSign className="h-8 w-8 text-mint-leaf" />
             </div>
           </div>
 
@@ -100,19 +100,19 @@ export function EventDetailsModal({ event, open, onOpenChange }: EventDetailsMod
               </div>
               <div className="rounded-lg border bg-card p-3">
                 <p className="text-xs font-medium text-muted-foreground">Paid</p>
-                <p className="text-2xl font-semibold mt-1 text-emerald-600">
+                <p className="text-2xl font-semibold mt-1 text-mint-leaf">
                   {event.stats.paidCount}
                 </p>
               </div>
               <div className="rounded-lg border bg-card p-3">
                 <p className="text-xs font-medium text-muted-foreground">Pending</p>
-                <p className="text-2xl font-semibold mt-1 text-amber-600">
+                <p className="text-2xl font-semibold mt-1 text-warning-amber">
                   {event.stats.pendingCount}
                 </p>
               </div>
               <div className="rounded-lg border bg-card p-3">
                 <p className="text-xs font-medium text-muted-foreground">Total Collected</p>
-                <p className="text-2xl font-semibold mt-1 text-blue-600">
+                <p className="text-2xl font-semibold mt-1 text-bright-indigo">
                   ${(event.stats.totalCollected / 100).toFixed(2)}
                 </p>
               </div>
@@ -126,7 +126,7 @@ export function EventDetailsModal({ event, open, onOpenChange }: EventDetailsMod
                 </div>
                 <div className="h-3 bg-muted rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-emerald-600 transition-all duration-300"
+                    className="h-full bg-mint-leaf transition-all duration-300"
                     style={{ width: `${paymentPercentage}%` }}
                   />
                 </div>
@@ -161,7 +161,7 @@ export function EventDetailsModal({ event, open, onOpenChange }: EventDetailsMod
                 <div className="flex items-center gap-3 text-sm">
                   <Calendar className="h-4 w-4 text-muted-foreground" />
                   <span className="text-muted-foreground">Expires:</span>
-                  <span className={`font-medium ${isExpired ? 'text-red-600' : ''}`}>
+                  <span className={`font-medium ${isExpired ? 'text-danger-red' : ''}`}>
                     {new Date(event.expiresAt).toLocaleDateString('en-US', {
                       year: 'numeric',
                       month: 'long',
@@ -183,23 +183,7 @@ export function EventDetailsModal({ event, open, onOpenChange }: EventDetailsMod
             </div>
           </div>
 
-          <Separator />
 
-          {/* Share Section */}
-          <div className="space-y-3">
-            <h3 className="font-semibold flex items-center gap-2">
-              <Share2 className="h-4 w-4" />
-              Share Event
-            </h3>
-            <div className="flex items-center gap-2">
-              <EventShareLink eventId={event.id} eventTitle={event.title} />
-              <p className="text-sm text-muted-foreground">
-                {hasAssignees 
-                  ? "Share with assigned members or let anyone pay via link"
-                  : "Anyone with this link can pay and join the club"}
-              </p>
-            </div>
-          </div>
 
           {/* Action Buttons */}
           <div className="flex gap-2 pt-4">

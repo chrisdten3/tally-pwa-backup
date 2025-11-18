@@ -102,7 +102,7 @@ const Section = ({ children, className = "", id }: { children: React.ReactNode; 
   <section
     id={id}
     style={{ scrollMarginTop: "4rem" }}
-    className={`mx-auto w-full max-w-7xl px-6 md:px-10 ${className}`}
+    className={`mx-auto w-full max-w-8xl px-6 md:px-10 ${className}`}
   >
     {children}
   </section>
@@ -183,19 +183,19 @@ function SignupModal({
       className="fixed inset-0 z-100 flex items-center justify-center p-4"
     >
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-onyx/60 backdrop-blur-sm"
         onClick={onClose}
       />
       <motion.div
         initial={{ opacity: 0, y: 16, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.18 }}
-        className="relative w-full max-w-lg rounded-2xl border border-white/10 bg-neutral-900/95 p-6 shadow-2xl"
+        className="relative w-full max-w-lg rounded-2xl border border-border bg-prussian-blue/95 p-6 shadow-2xl"
       >
         <button
           onClick={onClose}
           aria-label="Close"
-          className="absolute right-3 top-3 rounded-lg p-2 text-neutral-400 hover:bg-white/10 hover:text-white"
+          className="absolute right-3 top-3 rounded-lg p-2 text-cool-gray hover:bg-soft-white/10 hover:text-soft-white"
         >
           <X className="h-5 w-5" />
         </button>
@@ -218,7 +218,7 @@ function SignupModal({
         {submitted ? (
           <div className="flex flex-col items-center gap-4">
             <div className="relative flex items-center justify-center">
-              <div className="rounded-full bg-emerald-500/10 p-4 text-emerald-400">
+              <div className="rounded-full bg-mint-leaf/10 p-4 text-mint-leaf">
                 <Sparkles className="h-8 w-8" />
               </div>
             </div>
@@ -229,7 +229,7 @@ function SignupModal({
               className="text-center"
             >
               <h4 className="text-2xl font-semibold">You're in, {firstName} 🎉</h4>
-              <p className="mt-2 text-sm text-neutral-300">Thanks for joining the list — we’ll send invites and product updates soon.</p>
+              <p className="mt-2 text-sm text-cool-gray">Thanks for joining the list — we'll send invites and product updates soon.</p>
             </motion.div>
 
             {/* simple confetti pieces */}
@@ -335,9 +335,9 @@ export default function TallyLandingPage() {
     setTimeout(() => setSignupOpen(true), 250);
   };
   return (
-    <div id="top" className="min-h-screen bg-neutral-950 text-neutral-100">
+    <div id="top" className="min-h-screen bg-onyx text-soft-white">
       {/* Nav */}
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-neutral-950/80 backdrop-blur">
+      <header className="sticky top-0 z-50 border-b border-border bg-onyx/80 backdrop-blur">
         <Section className="flex h-16 items-center justify-between">
           <div className="flex items-center gap-2">
             <button
@@ -389,13 +389,13 @@ export default function TallyLandingPage() {
           <div className="flex items-center gap-3">
             <a
               href="/login"
-              className="text-sm font-medium text-neutral-300 hover:text-white"
+              className="text-sm font-medium text-cool-gray hover:text-soft-white"
             >
               Log in
             </a>
             <a
               href="/signup"
-              className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-200"
+              className="inline-flex items-center gap-2 rounded-xl bg-bright-indigo px-4 py-2 text-sm font-medium text-white hover:bg-bright-indigo/90"
             >
               Sign up
             </a>
@@ -406,7 +406,7 @@ export default function TallyLandingPage() {
       {/* Hero */}
       <Section className="relative py-20 md:py-28">
         <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-          <div className="absolute left-1/2 top-[-150px] h-[600px] w-[900px] -translate-x-1/2 rounded-full bg-linear-to-br from-fuchsia-500/20 via-violet-500/10 to-indigo-500/10 blur-3xl" />
+          <div className="absolute left-1/2 top-[-150px] h-[600px] w-[900px] -translate-x-1/2 rounded-full bg-linear-to-br from-bright-indigo/20 via-bright-indigo/10 to-bright-indigo/5 blur-3xl" />
         </div>
         <div className="grid gap-10 md:grid-cols-2 md:gap-16">
           <div>
@@ -416,27 +416,27 @@ export default function TallyLandingPage() {
               transition={{ duration: 0.6 }}
               className="text-balance text-4xl font-semibold leading-tight tracking-tight md:text-6xl"
             >
-              The simplest way to run <span className="bg-linear-to-r from-[#4737FC] to-indigo-400 bg-clip-text text-transparent">club finances</span>.
+              The simplest way to run <span className="bg-linear-to-r from-bright-indigo to-cool-gray bg-clip-text text-transparent">club finances</span>.
             </motion.h1>
-            <p className="mt-5 max-w-xl text-pretty text-base leading-relaxed text-neutral-300 md:text-lg">
+            <p className="mt-5 max-w-xl text-pretty text-base leading-relaxed text-cool-gray md:text-lg">
               Tally keeps dues, attendance, payouts, and communications in one place—so student leaders spend less time chasing payments and more time building community.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <a
                 id="get-started"
                 href="/signup"
-                className="inline-flex items-center justify-center rounded-2xl bg-white px-5 py-3 font-medium text-neutral-900 hover:bg-neutral-200"
+                className="inline-flex items-center justify-center rounded-2xl bg-bright-indigo px-5 py-3 font-medium text-white hover:bg-bright-indigo/90"
               >
                 Try Tally Free →
               </a>
               <button
                 onClick={openSignup}
-                className="inline-flex items-center justify-center rounded-2xl border border-white/20 px-5 py-3 font-medium text-white hover:bg-white/10"
+                className="inline-flex items-center justify-center rounded-2xl border border-border px-5 py-3 font-medium text-soft-white hover:bg-prussian-blue"
               >
                 Sign Up for Updates
               </button>
             </div>
-            <div className="mt-6 flex items-center gap-4 text-sm text-neutral-400">
+            <div className="mt-6 flex items-center gap-4 text-sm text-cool-gray">
               <div className="flex items-center gap-2"><ShieldCheck className="h-4 w-4" /> PCI‑aware best practices</div>
               <div className="hidden items-center gap-2 sm:flex"><Github className="h-4 w-4" /> Built by engineers, for orgs</div>
             </div>
@@ -449,102 +449,102 @@ export default function TallyLandingPage() {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="relative"
           >
-            <div className="relative mx-auto w-[340px] rounded-[48px] border-8 border-neutral-800 bg-black shadow-2xl ring-1 ring-white/10">
-              <div className="absolute left-1/2 top-0 h-6 w-32 -translate-x-1/2 rounded-b-2xl bg-neutral-800" />
-              <div className="overflow-hidden rounded-[40px] bg-neutral-950">
+            <div className="relative mx-auto w-[340px] rounded-[48px] border-8 border-prussian-blue bg-onyx shadow-2xl ring-1 ring-border">
+              <div className="absolute left-1/2 top-0 h-6 w-32 -translate-x-1/2 rounded-b-2xl bg-prussian-blue" />
+              <div className="overflow-hidden rounded-[40px] bg-onyx">
                 <div className="px-6 pb-8 pt-14">
                   <div className="mb-6 flex items-center gap-3">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-indigo-600/20 text-xl font-bold text-indigo-400">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-bright-indigo/20 text-xl font-bold text-bright-indigo">
                       JD
                     </div>
                     <div>
-                      <div className="font-semibold text-white">John Doe</div>
-                      <div className="text-sm text-neutral-400">johndoe@gmail.com</div>
+                      <div className="font-semibold text-soft-white">John Doe</div>
+                      <div className="text-sm text-cool-gray">johndoe@gmail.com</div>
                     </div>
                   </div>
                   
-                  <div className="mb-4 rounded-xl border border-emerald-500/20 bg-linear-to-br from-emerald-900/30 to-neutral-900/60 p-3">
+                  <div className="mb-4 rounded-xl border border-mint-leaf/20 bg-linear-to-br from-mint-leaf/30 to-prussian-blue/60 p-3">
                     <div className="mb-2 flex items-center justify-between">
-                      <div className="text-sm font-semibold text-white">Club Balance</div>
-                      <div className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
+                      <div className="text-sm font-semibold text-soft-white">Club Balance</div>
+                      <div className="rounded-full bg-mint-leaf/20 px-2 py-0.5 text-[10px] font-medium text-mint-leaf">
                         +12% this month
                       </div>
                     </div>
-                    <div className="text-2xl font-bold text-white">$847.50</div>
+                    <div className="text-2xl font-bold text-soft-white">$847.50</div>
                     <div className="mt-2 flex gap-2">
-                      <div className="flex-1 rounded-lg bg-white/5 p-2">
-                        <div className="text-[10px] text-neutral-400">Collected</div>
-                        <div className="text-xs font-semibold text-white">$1,240</div>
+                      <div className="flex-1 rounded-lg bg-soft-white/5 p-2">
+                        <div className="text-[10px] text-cool-gray">Collected</div>
+                        <div className="text-xs font-semibold text-soft-white">$1,240</div>
                       </div>
-                      <div className="flex-1 rounded-lg bg-white/5 p-2">
-                        <div className="text-[10px] text-neutral-400">Spent</div>
-                        <div className="text-xs font-semibold text-white">$392.50</div>
+                      <div className="flex-1 rounded-lg bg-soft-white/5 p-2">
+                        <div className="text-[10px] text-cool-gray">Spent</div>
+                        <div className="text-xs font-semibold text-soft-white">$392.50</div>
                       </div>
                     </div>
                   </div>
 
 
-                  <div className="mt-6 rounded-2xl border border-white/10 bg-neutral-900/60 p-4">
+                  <div className="mt-6 rounded-2xl border border-border bg-prussian-blue/60 p-4">
                     <div className="mb-4 flex items-center justify-between">
-                      <div className="text-base font-semibold text-white">Recent Activity</div>
-                      <button className="text-sm text-indigo-400">View All</button>
+                      <div className="text-base font-semibold text-soft-white">Recent Activity</div>
+                      <button className="text-sm text-bright-indigo">View All</button>
                     </div>
                     <div className="space-y-3">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-600/20">
-                          <svg className="h-5 w-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-mint-leaf/20">
+                          <svg className="h-5 w-5 text-mint-leaf" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                           </svg>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm text-white truncate">Jane Doe</div>
-                          <div className="text-xs text-neutral-400">Chess Club · Just now</div>
+                          <div className="text-sm text-soft-white truncate">Jane Doe</div>
+                          <div className="text-xs text-cool-gray">Chess Club · Just now</div>
                         </div>
-                        <div className="text-sm font-semibold text-green-400">+$1.00</div>
+                        <div className="text-sm font-semibold text-mint-leaf">+$1.00</div>
                       </div>
                       <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-600/20">
-                          <svg className="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-danger-red/20">
+                          <svg className="h-5 w-5 text-danger-red" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                           </svg>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm text-white truncate">Steve Smith</div>
-                          <div className="text-xs text-neutral-400">Club Soccer · 2 days ago</div>
+                          <div className="text-sm text-soft-white truncate">Steve Smith</div>
+                          <div className="text-xs text-cool-gray">Club Soccer · 2 days ago</div>
                         </div>
-                        <div className="text-sm font-semibold text-red-400">-$5.00</div>
+                        <div className="text-sm font-semibold text-danger-red">-$5.00</div>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="border-t border-white/5 bg-neutral-900/40 px-6 py-4 backdrop-blur">
+                <div className="border-t border-border bg-prussian-blue/40 px-6 py-4 backdrop-blur">
                   <div className="flex items-center justify-between">
-                    <button className="flex flex-col items-center gap-1 text-indigo-400">
+                    <button className="flex flex-col items-center gap-1 text-bright-indigo">
                       <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                       </svg>
                       <span className="text-xs font-medium">Home</span>
                     </button>
-                    <button className="flex flex-col items-center gap-1 text-neutral-500">
+                    <button className="flex flex-col items-center gap-1 text-cool-gray">
                       <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                       </svg>
                       <span className="text-xs font-medium">Clubs</span>
                     </button>
-                    <button className="flex flex-col items-center gap-1 text-neutral-500">
+                    <button className="flex flex-col items-center gap-1 text-cool-gray">
                       <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                       </svg>
                       <span className="text-xs font-medium">Payout</span>
                     </button>
-                    <button className="flex flex-col items-center gap-1 text-neutral-500">
+                    <button className="flex flex-col items-center gap-1 text-cool-gray">
                       <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
                       <span className="text-xs font-medium">Events</span>
                     </button>
-                    <button className="flex flex-col items-center gap-1 text-neutral-500">
+                    <button className="flex flex-col items-center gap-1 text-cool-gray">
                       <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -561,7 +561,7 @@ export default function TallyLandingPage() {
 
       {/* Logos */}
 <Section className="py-14">
-  <p className="text-center text-sm uppercase tracking-[0.15em] text-neutral-400">
+  <p className="text-center text-sm uppercase tracking-[0.15em] text-cool-gray">
     Trusted by clubs, teams, and student orgs
   </p>
 
@@ -585,14 +585,14 @@ export default function TallyLandingPage() {
       <Section id="features" className="py-20">
         <div className="mx-auto max-w-3xl text-center">
           <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">Everything a treasurer needs</h2>
-          <p className="mt-3 text-neutral-300">Purpose‑built workflows that keep your books—and your members—in sync.</p>
+          <p className="mt-3 text-cool-gray">Purpose‑built workflows that keep your books—and your members—in sync.</p>
         </div>
         <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {features.map((f) => (
-            <div key={f.title} className="group rounded-2xl border border-white/10 bg-neutral-900/40 p-6 transition hover:bg-white/5">
-              <div className="mb-4 inline-flex rounded-xl bg-white/10 p-3 text-white">{f.icon}</div>
+            <div key={f.title} className="group rounded-2xl border border-border bg-prussian-blue/40 p-6 transition hover:bg-prussian-blue/60">
+              <div className="mb-4 inline-flex rounded-xl bg-bright-indigo/20 p-3 text-bright-indigo">{f.icon}</div>
               <h3 className="text-lg font-semibold">{f.title}</h3>
-              <p className="mt-2 text-sm text-neutral-300">{f.desc}</p>
+              <p className="mt-2 text-sm text-cool-gray">{f.desc}</p>
             </div>
           ))}
         </div>
@@ -603,15 +603,15 @@ export default function TallyLandingPage() {
         <div className="grid items-center gap-10 md:grid-cols-2 md:gap-16">
           <div>
             <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">From messy spreadsheets to clarity in minutes</h2>
-            <ul className="mt-6 space-y-4 text-neutral-300">
+            <ul className="mt-6 space-y-4 text-cool-gray">
               <li className="flex gap-3"><span className="mt-0.5">1.</span> Create your club.</li>
               <li className="flex gap-3"><span className="mt-0.5">2.</span> Set an event, and select who is responsible</li>
               <li className="flex gap-3"><span className="mt-0.5">3.</span> Members choose card, wallet, or bank.*</li>
               <li className="flex gap-3"><span className="mt-0.5">4.</span> Tally auto‑reconciles payments, attendance, and reminders.</li>
             </ul>
-            <p className="mt-2 text-xs text-neutral-500">* Payment methods facilitated via Paypal Inc.</p>
+            <p className="mt-2 text-xs text-muted-foreground">* Payment methods facilitated via Paypal Inc.</p>
           </div>
-          <div className="relative rounded-3xl border border-white/10 bg-neutral-900 p-4">
+          <div className="relative rounded-3xl border border-border bg-prussian-blue p-4">
             <div className="grid gap-4 sm:grid-cols-2">
               {[
                 { h: "Import members", p: "Map columns and validate emails automatically." },
@@ -619,9 +619,9 @@ export default function TallyLandingPage() {
                 { h: "Attendance sync", p: "Tie activity to eligibility and perks." },
                 { h: "One source of truth", p: "Finance, roster, and CRM all aligned." },
               ].map((x) => (
-                <div key={x.h} className="rounded-xl border border-white/10 bg-neutral-950 p-4">
+                <div key={x.h} className="rounded-xl border border-border bg-onyx p-4">
                   <h4 className="text-sm font-medium">{x.h}</h4>
-                  <p className="mt-1 text-sm text-neutral-400">{x.p}</p>
+                  <p className="mt-1 text-sm text-cool-gray">{x.p}</p>
                 </div>
               ))}
             </div>
@@ -635,7 +635,7 @@ export default function TallyLandingPage() {
       <Section id="faq" className="py-20">
         <div className="mx-auto max-w-3xl">
           <h2 className="text-center text-3xl font-semibold tracking-tight md:text-4xl">FAQ</h2>
-          <div className="mt-8 divide-y divide-white/10 rounded-2xl border border-white/10 bg-neutral-900/40">
+          <div className="mt-8 divide-y divide-border rounded-2xl border border-border bg-prussian-blue/40">
             {[
               {
                 q: "Do you support multiple clubs per user?",
@@ -653,11 +653,11 @@ export default function TallyLandingPage() {
               <details key={item.q} className="group p-6">
                 <summary className="flex cursor-pointer list-none items-center justify-between text-base font-medium">
                   {item.q}
-                  <span className="ml-4 text-neutral-400 transition group-open:rotate-90">
+                  <span className="ml-4 text-cool-gray transition group-open:rotate-90">
                     <ArrowRight className="h-4 w-4" />
                   </span>
                 </summary>
-                <p className="mt-3 text-sm text-neutral-300">{item.a}</p>
+                <p className="mt-3 text-sm text-cool-gray">{item.a}</p>
               </details>
             ))}
           </div>
@@ -665,9 +665,9 @@ export default function TallyLandingPage() {
       </Section>
 
       {/* Footer */}
-      <footer className="border-t border-white/10 py-12">
-        <Section className="flex flex-col items-center justify-between gap-6 text-sm text-neutral-400 md:flex-row">
-          <div className="flex items-center gap-2 text-neutral-300">
+      <footer className="border-t border-border py-12">
+        <Section className="flex flex-col items-center justify-between gap-6 text-sm text-cool-gray md:flex-row">
+          <div className="flex items-center gap-2 text-soft-white">
             <Image
               src="/tally-icon.png" // <-- update this to your logo file name in /public
               alt="Tally Logo"
@@ -678,9 +678,9 @@ export default function TallyLandingPage() {
             <span>© {new Date().getFullYear()}</span>
           </div>
           <div className="flex items-center gap-4">
-            <a href="#" className="hover:text-neutral-200">Terms</a>
-            <a href="#" className="hover:text-neutral-200">Privacy</a>
-            <a href="#" className="hover:text-neutral-200">Contact</a>
+            <a href="#" className="hover:text-soft-white">Terms</a>
+            <a href="#" className="hover:text-soft-white">Privacy</a>
+            <a href="#" className="hover:text-soft-white">Contact</a>
           </div>
         </Section>
       </footer>

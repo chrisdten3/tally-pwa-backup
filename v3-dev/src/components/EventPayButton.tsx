@@ -30,7 +30,7 @@ export default function EventPayButton({ eventId, authToken }: Props) {
     <div className="flex gap-2">
       <button
         onClick={createStripeSession}
-        className="bg-sky-600 text-white py-2 px-4 rounded-md hover:bg-sky-700"
+        className="bg-bright-indigo text-white py-2 px-4 rounded-md hover:bg-bright-indigo/90 transition-colors"
       >
         Pay with Card
       </button>

@@ -117,7 +117,7 @@ export default function BottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/10 bg-zinc-950/70 backdrop-blur-xl"
+      className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-prussian-blue/70 backdrop-blur-xl"
       role="navigation"
       aria-label="Primary"
     >
@@ -130,10 +130,10 @@ export default function BottomNav() {
                 <Link
                   href={href}
                   className={`flex flex-col items-center justify-center py-3 text-xs transition-colors ${
-                    active ? "text-indigo-300" : "text-zinc-400 hover:text-zinc-200"
+                    active ? "text-bright-indigo" : "text-cool-gray hover:text-soft-white"
                   }`}
                 >
-                  <Icon size={20} className={active ? "drop-shadow-[0_0_8px_rgba(99,102,241,0.35)]" : ""} />
+                  <Icon size={20} className={active ? "drop-shadow-[0_0_8px_rgba(61,48,244,0.4)]" : ""} />
                   <span className="mt-1">{label}</span>
                 </Link>
               </li>

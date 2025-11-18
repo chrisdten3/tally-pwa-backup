@@ -90,18 +90,18 @@ export default function PublicEventPaymentPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-soft-white to-cool-gray/20 dark:from-onyx dark:to-prussian-blue p-4">
+        <Loader2 className="h-8 w-8 animate-spin text-bright-indigo" />
       </div>
     );
   }
 
   if (error && !event) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-soft-white to-cool-gray/20 dark:from-onyx dark:to-prussian-blue p-4">
         <Card className="max-w-md w-full">
           <CardHeader>
-            <CardTitle className="text-red-600">Error</CardTitle>
+            <CardTitle className="text-danger-red">Error</CardTitle>
             <CardDescription>{error}</CardDescription>
           </CardHeader>
         </Card>
@@ -114,7 +114,7 @@ export default function PublicEventPaymentPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-soft-white to-cool-gray/20 dark:from-onyx dark:to-prussian-blue p-4">
       <Card className="max-w-lg w-full shadow-xl">
         <CardHeader className="space-y-3">
           <div className="flex items-start justify-between">
@@ -134,7 +134,7 @@ export default function PublicEventPaymentPage() {
               )}
             </div>
             <div className="text-right">
-              <div className="text-3xl font-bold text-blue-600">
+              <div className="text-3xl font-bold text-cool-gray dark:text-soft-white">
                 ${(event.amount / 100).toFixed(2)}
               </div>
             </div>
@@ -146,8 +146,8 @@ export default function PublicEventPaymentPage() {
 
         <CardContent>
           {event.isExpired ? (
-            <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg p-4 text-center">
-              <p className="text-red-900 dark:text-red-100 font-medium">
+            <div className="bg-danger-red/10 dark:bg-danger-red/20 border border-danger-red/30 dark:border-danger-red/50 rounded-lg p-4 text-center">
+              <p className="text-danger-red font-medium">
                 This event has expired and is no longer accepting payments.
               </p>
             </div>
@@ -199,7 +199,7 @@ export default function PublicEventPaymentPage() {
                   required
                 />
                 <p className="text-xs text-muted-foreground">
-                  Used to identify you in the club
+                  Subject to SMS messaging rates.
                 </p>
               </div>
 
@@ -219,13 +219,13 @@ export default function PublicEventPaymentPage() {
               </div>
 
               {error && (
-                <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg p-3">
-                  <p className="text-sm text-red-900 dark:text-red-100">{error}</p>
+                <div className="bg-danger-red/10 dark:bg-danger-red/20 border border-danger-red/30 dark:border-danger-red/50 rounded-lg p-3">
+                  <p className="text-sm text-danger-red">{error}</p>
                 </div>
               )}
 
-              <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
-                <p className="text-sm text-blue-900 dark:text-blue-100">
+              <div className="bg-mint-leaf/10 dark:bg-mint-leaf/20 border border-mint-leaf/30 dark:border-mint-leaf/50 rounded-lg p-3">
+                <p className="text-sm text-prussian-blue dark:text-mint-leaf">
                   <strong>Note:</strong> After payment, you'll be automatically added to{" "}
                   {event.club.name}
                 </p>

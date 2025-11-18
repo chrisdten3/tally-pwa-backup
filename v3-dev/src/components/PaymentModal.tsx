@@ -44,13 +44,13 @@ export default function PaymentModal({ isOpen, onClose, event }: PaymentModalPro
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg w-full max-w-md">
-        <div className="flex justify-between items-center p-4 border-b">
-          <h2 className="text-xl font-semibold">Payment Options</h2>
+    <div className="fixed inset-0 bg-onyx/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-prussian-blue border border-border rounded-lg w-full max-w-md">
+        <div className="flex justify-between items-center p-4 border-b border-border">
+          <h2 className="text-xl font-semibold text-soft-white">Payment Options</h2>
           <button 
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700"
+            className="text-cool-gray hover:text-soft-white transition-colors"
             disabled={isLoading}
           >
             <X size={24} />
@@ -58,14 +58,14 @@ export default function PaymentModal({ isOpen, onClose, event }: PaymentModalPro
         </div>
         
         <div className="p-6">
-          <h3 className="text-lg font-medium mb-2">{event.name}</h3>
-          <p className="text-gray-600 mb-6">{event.description || 'No description available'}</p>
+          <h3 className="text-lg font-medium mb-2 text-soft-white">{event.name}</h3>
+          <p className="text-cool-gray mb-6">{event.description || 'No description available'}</p>
           
           <div className="space-y-4">
             <button
               onClick={() => handlePayment('card')}
               disabled={isLoading}
-              className="w-full flex items-center justify-center space-x-2 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center space-x-2 bg-bright-indigo text-white py-3 px-4 rounded-lg hover:bg-bright-indigo/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               <CreditCard size={20} />
               <span>Pay with Card</span>
@@ -74,7 +74,7 @@ export default function PaymentModal({ isOpen, onClose, event }: PaymentModalPro
             <button
               onClick={() => handlePayment('venmo')}
               disabled={isLoading}
-              className="w-full flex items-center justify-center space-x-2 bg-teal-500 text-white py-3 px-4 rounded-lg hover:bg-teal-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center space-x-2 bg-mint-leaf text-white py-3 px-4 rounded-lg hover:bg-mint-leaf/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               <DollarSign size={20} />
               <span>Pay with Venmo</span>
