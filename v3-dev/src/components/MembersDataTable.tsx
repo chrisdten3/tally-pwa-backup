@@ -32,13 +32,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export type Member = {
   id: string;
-  firstName: string;
-  lastName: string;
+  name?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
   phoneNumber?: string;
-  dateJoined: string;
+  joinedAt?: string;
+  dateJoined?: string;
+  role?: string;
   eventsPaid?: number;
   eventsOutstanding?: number;
   totalPaid?: number;
+  totalReceived?: number;
 };
 
 type Props = {
@@ -67,6 +73,39 @@ export function MembersDataTable({
     dateJoined: new Date().toISOString().split("T")[0],
   });
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  // Helper functions to extract member data
+  const getFirstName = (member: Member) => {
+    if (member.firstName) return member.firstName;
+    if (member.name) {
+      const parts = member.name.split(" ");
+      return parts[0] || "";
+    }
+    return "";
+  };
+
+  const getLastName = (member: Member) => {
+    if (member.lastName) return member.lastName;
+    if (member.name) {
+      const parts = member.name.split(" ");
+      return parts.slice(1).join(" ") || "";
+    }
+    return "";
+  };
+
+  const getPhoneNumber = (member: Member) => {
+    return member.phoneNumber || member.phone || "";
+  };
+
+  const getDateJoined = (member: Member) => {
+    const dateStr = member.dateJoined || member.joinedAt;
+    if (!dateStr) return "—";
+    try {
+      return new Date(dateStr).toLocaleDateString();
+    } catch {
+      return "—";
+    }
+  };
 
   const handleAddMember = () => {
     if (newMember.firstName && newMember.lastName) {
@@ -136,11 +175,11 @@ export function MembersDataTable({
                   members.slice(0, 5).map((member) => (
                     <TableRow key={member.id}>
                       <TableCell className="font-medium">
-                        {member.firstName}
+                        {getFirstName(member)}
                       </TableCell>
-                      <TableCell>{member.lastName}</TableCell>
+                      <TableCell>{getLastName(member)}</TableCell>
                       <TableCell>
-                        {new Date(member.dateJoined).toLocaleDateString()}
+                        {getDateJoined(member)}
                       </TableCell>
                     </TableRow>
                   ))
@@ -288,14 +327,14 @@ export function MembersDataTable({
                     members.map((member) => (
                       <TableRow key={member.id}>
                         <TableCell className="font-medium">
-                          {member.firstName}
+                          {getFirstName(member)}
                         </TableCell>
-                        <TableCell>{member.lastName}</TableCell>
+                        <TableCell>{getLastName(member)}</TableCell>
                         <TableCell className="text-muted-foreground">
-                          {member.phoneNumber || "—"}
+                          {getPhoneNumber(member) || "—"}
                         </TableCell>
                         <TableCell>
-                          {new Date(member.dateJoined).toLocaleDateString()}
+                          {getDateJoined(member)}
                         </TableCell>
                         <TableCell className="text-right">
                           {member.eventsPaid ?? 0}
@@ -304,7 +343,7 @@ export function MembersDataTable({
                           {member.eventsOutstanding ?? 0}
                         </TableCell>
                         <TableCell className="text-right">
-                          ${(member.totalPaid ?? 0).toFixed(2)}
+                          ${((member.totalPaid ?? 0) / 100).toFixed(2)}
                         </TableCell>
                         <TableCell>
                           <div className="flex justify-end gap-1">
@@ -338,9 +377,11 @@ export function MembersDataTable({
                               size="icon"
                               className="h-8 w-8 text-destructive hover:text-destructive"
                               onClick={() => {
+                                const firstName = getFirstName(member);
+                                const lastName = getLastName(member);
                                 if (
                                   confirm(
-                                    `Are you sure you want to delete ${member.firstName} ${member.lastName}?`
+                                    `Are you sure you want to delete ${firstName} ${lastName}?`
                                   )
                                 ) {
                                   onDeleteMember?.(member.id);

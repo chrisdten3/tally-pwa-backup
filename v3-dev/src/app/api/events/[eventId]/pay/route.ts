@@ -133,7 +133,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ eve
     }
 
     // Create Stripe checkout session
-    const amountCents = stripeLib.amountToCents(Number(event.amount));
+    // Note: event.amount is already stored in cents in the database
+    const amountCents = Number(event.amount);
 
     const origin = (() => {
       try {

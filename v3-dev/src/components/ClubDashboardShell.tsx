@@ -337,7 +337,7 @@ function ClubDashboard({
                     <div>
                       <div className="font-medium">
                         {item.amount > 0 ? "+" : "-"}$
-                        {Math.abs(item.amount).toFixed(2)}
+                        {(Math.abs(item.amount) / 100).toFixed(2)}
                       </div>
                       <div className="text-xs text-muted-foreground">
                         {item.type === "payment" ? "Payment" : "Payout"} •{" "}

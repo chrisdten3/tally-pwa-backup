@@ -36,12 +36,6 @@ export default function PaymentSuccessPage() {
               Your payment has been processed successfully. You'll receive a confirmation and can track your membership in the club.
             </p>
           </div>
-          <Button
-            onClick={() => router.push("/")}
-            className="w-full"
-          >
-            Go to Home
-          </Button>
         </CardContent>
       </Card>
     </div>

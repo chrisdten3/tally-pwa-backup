@@ -12,15 +12,29 @@ export async function POST(req: NextRequest) {
     const sig = req.headers.get("stripe-signature") || req.headers.get("Stripe-Signature");
 
     const ok = stripeLib.verifyStripeSignature(raw, sig);
-    if (!ok) return NextResponse.json({ ok: false }, { status: 400 });
+    if (!ok) {
+      console.error("Stripe signature verification failed");
+      return NextResponse.json({ ok: false }, { status: 400 });
+    }
 
     const event = JSON.parse(raw);
+    console.log(`[Stripe Webhook] Received event: ${event.type}, ID: ${event.id}`);
 
     try {
       if (event.type === "checkout.session.completed") {
+        console.log("[Stripe Webhook] Processing checkout.session.completed");
         const session = event.data?.object;
         const sessionId = session?.id;
         const paymentIntent = session?.payment_intent;
+        const paymentStatus = session?.payment_status;
+
+        console.log(`[Stripe Webhook] Session ID: ${sessionId}, Payment Intent: ${paymentIntent}, Payment Status: ${paymentStatus}`);
+
+        // Only process if payment was successful
+        if (paymentStatus !== "paid") {
+          console.log(`[Stripe Webhook] Payment status is ${paymentStatus}, skipping processing`);
+          return NextResponse.json({ received: true });
+        }
 
         // lookup payments_pending
         if (sessionId) {
@@ -30,6 +44,8 @@ export async function POST(req: NextRequest) {
             .eq("order_id", sessionId)
             .limit(1);
           const pending = pendingRows?.[0];
+          console.log(`[Stripe Webhook] Found pending payment:`, pending ? `Yes (assignment_id: ${pending.assignment_id})` : "No");
+          
           let assignment: any = null;
 
           if (pending && pending.assignment_id) {
@@ -41,10 +57,12 @@ export async function POST(req: NextRequest) {
               .is("paid_at", null)
               .limit(1);
             assignment = aRows?.[0];
+            console.log(`[Stripe Webhook] Found assignment from pending:`, assignment ? `Yes (${assignment.id})` : "No");
           }
 
           // fallback: try metadata on session
           if (!assignment && session?.metadata?.assignment_id) {
+            console.log(`[Stripe Webhook] Trying metadata assignment_id: ${session.metadata.assignment_id}`);
             const { data: aRows } = await supabaseAdmin
               .from("club_event_assignees")
               .select("*")
@@ -53,10 +71,12 @@ export async function POST(req: NextRequest) {
               .is("paid_at", null)
               .limit(1);
             assignment = aRows?.[0];
+            console.log(`[Stripe Webhook] Found assignment from metadata:`, assignment ? `Yes (${assignment.id})` : "No");
           }
 
           // another fallback: event_id in metadata
           if (!assignment && session?.metadata?.event_id) {
+            console.log(`[Stripe Webhook] Trying metadata event_id: ${session.metadata.event_id}`);
             const { data: aRows } = await supabaseAdmin
               .from("club_event_assignees")
               .select("*")
@@ -65,9 +85,11 @@ export async function POST(req: NextRequest) {
               .is("paid_at", null)
               .limit(1);
             assignment = aRows?.[0];
+            console.log(`[Stripe Webhook] Found assignment from event_id:`, assignment ? `Yes (${assignment.id})` : "No");
           }
 
           if (assignment) {
+            console.log(`[Stripe Webhook] Found assignment: ${assignment.id}, updating payment status`);
             const paidAt = new Date().toISOString();
             const paymentId = paymentIntent || sessionId;
 
@@ -80,7 +102,7 @@ export async function POST(req: NextRequest) {
               .limit(1);
 
             if (!membershipRows || membershipRows.length === 0) {
-              // Add user to club membership with joined_via_payment flag
+              console.log(`[Stripe Webhook] Adding user ${assignment.user_id} to club ${assignment.club_id}`);
               await supabaseAdmin.from("memberships").insert({
                 club_id: assignment.club_id,
                 user_id: assignment.user_id,
@@ -88,10 +110,12 @@ export async function POST(req: NextRequest) {
                 joined_via_payment: true,
                 created_at: paidAt,
               });
+            } else {
+              console.log(`[Stripe Webhook] User ${assignment.user_id} already member of club ${assignment.club_id}`);
             }
 
             // Mark assignment as paid
-            await supabaseAdmin
+            const { error: assignmentError } = await supabaseAdmin
               .from("club_event_assignees")
               .update({ 
                 paid_at: paidAt, 
@@ -99,23 +123,44 @@ export async function POST(req: NextRequest) {
                 payment_id: paymentId 
               })
               .eq("id", assignment.id);
+            
+            if (assignmentError) {
+              console.error(`[Stripe Webhook] Error updating assignment:`, assignmentError);
+            } else {
+              console.log(`[Stripe Webhook] Assignment ${assignment.id} marked as paid`);
+            }
 
             // Update club balance
             const increment = Number(assignment.assigned_amount || 0);
-            const { data: clubRows } = await supabaseAdmin
+            console.log(`[Stripe Webhook] Incrementing club balance by ${increment} cents`);
+            
+            const { data: clubRows, error: clubSelectError } = await supabaseAdmin
               .from("clubs")
               .select("*")
               .eq("id", assignment.club_id)
               .limit(1);
+            
+            if (clubSelectError) {
+              console.error(`[Stripe Webhook] Error fetching club:`, clubSelectError);
+            }
+            
             const club = clubRows?.[0];
             
             if (club) {
               const prev = Number(club.balance || 0);
               const newBalance = prev + increment;
-              await supabaseAdmin
+              console.log(`[Stripe Webhook] Updating club ${club.id} balance: ${prev} + ${increment} = ${newBalance}`);
+              
+              const { error: balanceError } = await supabaseAdmin
                 .from("clubs")
                 .update({ balance: newBalance })
                 .eq("id", club.id);
+              
+              if (balanceError) {
+                console.error(`[Stripe Webhook] Error updating club balance:`, balanceError);
+              } else {
+                console.log(`[Stripe Webhook] Club ${club.id} balance successfully updated to ${newBalance}`);
+              }
 
               // Get user info for ledger
               const { data: userRows } = await supabaseAdmin
@@ -144,22 +189,44 @@ export async function POST(req: NextRequest) {
                 created_at: paidAt,
                 description: `Payment for event ${assignment.club_event_id || session?.metadata?.event_id}`,
               };
-              await supabaseAdmin.from("ledgers").insert(ledgerEntry);
+              
+              const { error: ledgerError } = await supabaseAdmin.from("ledgers").insert(ledgerEntry);
+              
+              if (ledgerError) {
+                console.error(`[Stripe Webhook] Error creating ledger entry:`, ledgerError);
+              } else {
+                console.log(`[Stripe Webhook] Ledger entry created: ${ledgerEntry.id}`);
+              }
+            } else {
+              console.error(`[Stripe Webhook] Club not found: ${assignment.club_id}`);
             }
 
             // Mark pending payment as captured
-            await supabaseAdmin
+            const { error: captureError } = await supabaseAdmin
               .from("payments_pending")
               .update({ captured: true })
               .eq("assignment_id", assignment.id)
               .eq("order_id", sessionId);
+            
+            if (captureError) {
+              console.error(`[Stripe Webhook] Error marking payment as captured:`, captureError);
+            } else {
+              console.log(`[Stripe Webhook] Pending payment marked as captured`);
+            }
+          } else {
+            console.log("[Stripe Webhook] No assignment found for this checkout session");
+            console.log(`[Stripe Webhook] Session metadata:`, JSON.stringify(session?.metadata));
           }
+        } else {
+          console.log("[Stripe Webhook] No session ID found");
         }
       }
     } catch (e) {
-      console.error("Error processing stripe webhook event:", e);
+      console.error("[Stripe Webhook] Error processing stripe webhook event:", e);
+      console.error("[Stripe Webhook] Error stack:", e instanceof Error ? e.stack : "No stack trace");
     }
 
+    console.log(`[Stripe Webhook] Successfully processed event ${event.type}`);
     return NextResponse.json({ received: true });
   } catch (e: any) {
     return NextResponse.json({ error: e.message || "verify error" }, { status: 500 });
