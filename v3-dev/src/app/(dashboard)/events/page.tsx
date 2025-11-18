@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CalendarDays, Plus } from "lucide-react";
+import { CalendarDays } from "lucide-react";
 import { useClub } from "@/contexts/ClubContext";
+import { CreateEventModal } from "@/components/CreateEventModal";
 
 type Event = {
   id: string;
@@ -31,12 +32,13 @@ export default function EventsPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const fetchEvents = () => {
     if (!activeClub?.id) return;
 
     const token = localStorage.getItem("token");
     if (!token) return;
 
+    setLoading(true);
     fetch(`/api/clubs/${activeClub.id}/events`, {
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -48,6 +50,10 @@ export default function EventsPage() {
       })
       .catch((err) => console.error("Failed to fetch events:", err))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchEvents();
   }, [activeClub?.id]);
 
   if (!activeClub) {
@@ -79,10 +85,7 @@ export default function EventsPage() {
           <h1 className="text-2xl font-semibold sm:text-3xl">
             Manage Events
           </h1>
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            New Event
-          </Button>
+          <CreateEventModal onEventCreated={fetchEvents} />
         </div>
       </div>
 

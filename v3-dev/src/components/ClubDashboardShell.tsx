@@ -23,6 +23,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { MembersDataTable, type Member } from "@/components/MembersDataTable";
 import { useClub } from "@/contexts/ClubContext";
+import { CreateEventModal } from "@/components/CreateEventModal";
 
 type Club = {
   id: string;
@@ -138,12 +139,31 @@ export default function ClubDashboardShell({ userName }: Props) {
               New club
             </Link>
           </Button>
-          <Button asChild size="sm">
-            <Link href="/events/new">
-              <CalendarDays className="mr-2 h-4 w-4" />
-              New event
-            </Link>
-          </Button>
+          <CreateEventModal onEventCreated={() => {
+            // Refresh dashboard data when event is created
+            if (activeClub?.id) {
+              const token = localStorage.getItem("token");
+              if (!token) return;
+              
+              Promise.all([
+                fetch(`/api/clubs/${activeClub.id}/stats`, {
+                  headers: { Authorization: `Bearer ${token}` },
+                }).then(r => r.json()),
+                fetch(`/api/clubs/${activeClub.id}/members`, {
+                  headers: { Authorization: `Bearer ${token}` },
+                }).then(r => r.json())
+              ]).then(([statsData, membersData]) => {
+                if (statsData) {
+                  setStats(statsData.stats);
+                  setActionItems(statsData.actionItems || []);
+                  setRecentActivity(statsData.recentActivity || []);
+                }
+                if (membersData?.members) {
+                  setMembers(membersData.members);
+                }
+              }).catch(err => console.error("Failed to refresh data:", err));
+            }
+          }} />
         </div>
 
         {activeClub ? (
@@ -238,24 +258,15 @@ function ClubDashboard({
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-3 sm:grid-cols-2">
+              <CreateEventModal onEventCreated={() => window.location.reload()} />
               <Button
                 asChild
                 variant="outline"
                 className="justify-start gap-2"
               >
-                <Link href="/events/new">
-                  <CalendarDays className="h-4 w-4" />
-                  Create event
-                </Link>
-              </Button>
-              <Button
-                asChild
-                variant="outline"
-                className="justify-start gap-2"
-              >
-                <Link href="/members/add">
+                <Link href="/members">
                   <Users className="h-4 w-4" />
-                  Add member
+                  View members
                 </Link>
               </Button>
               <Button

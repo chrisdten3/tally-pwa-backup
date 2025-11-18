@@ -355,9 +355,36 @@ export default function TallyLandingPage() {
             </button>
           </div>
           <nav className="hidden items-center gap-6 text-sm md:flex">
-            <a href="#features" className="opacity-80 hover:opacity-100">Features</a>
-            <a href="#how" className="opacity-80 hover:opacity-100">How it works</a>
-            <a href="#faq" className="opacity-80 hover:opacity-100">FAQ</a>
+            <a 
+              href="#features" 
+              className="opacity-80 hover:opacity-100"
+              onClick={(e) => {
+                e.preventDefault();
+                document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+            >
+              Features
+            </a>
+            <a 
+              href="#how" 
+              className="opacity-80 hover:opacity-100"
+              onClick={(e) => {
+                e.preventDefault();
+                document.getElementById('how')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+            >
+              How it works
+            </a>
+            <a 
+              href="#faq" 
+              className="opacity-80 hover:opacity-100"
+              onClick={(e) => {
+                e.preventDefault();
+                document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+            >
+              FAQ
+            </a>
           </nav>
           <div className="flex items-center gap-3">
             <a
