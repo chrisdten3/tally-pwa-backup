@@ -218,21 +218,26 @@ export default function HomePage() {
           </div>
         </header>
 
-        {/* Alerts Section */}
-        <div className="space-y-4 mb-8">
-          {/* No clubs alert */}
-        {!hasClubs && (
-        <div className="space-y-6">
+        {/* Setup flow - show only if incomplete */}
+        {(!hasClubs || needsStripeOnboarding) && (
+          <div className="space-y-6">
             <div className="mb-8 text-center">
-            <h2 className="mb-3 text-3xl font-bold">Let&apos;s Get You Set Up</h2>
-            <p className="mx-auto max-w-2xl text-lg text-zinc-400">
-                Complete these two steps to start managing your club payments and events.
-            </p>
+              <h2 className="mb-3 text-3xl font-bold">
+                {!hasClubs && needsStripeOnboarding 
+                  ? "Let's Get You Set Up" 
+                  : "Complete Your Setup"}
+              </h2>
+              <p className="mx-auto max-w-2xl text-lg text-zinc-400">
+                {!hasClubs && needsStripeOnboarding
+                  ? "Complete these two steps to start managing your club payments and events."
+                  : "One more step to get started!"}
+              </p>
             </div>
 
-            <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-2">
-            {/* Create Club Card */}
-            <Link href="/clubs/new">
+            <div className={`mx-auto grid max-w-5xl grid-cols-1 gap-6 ${!hasClubs && needsStripeOnboarding ? 'md:grid-cols-2' : 'md:grid-cols-1 max-w-2xl'}`}>
+            {/* Create Club Card - only show if user has no clubs */}
+            {!hasClubs && (
+              <Link href="/clubs/new">
                 <div className="group cursor-pointer rounded-3xl border border-zinc-800 bg-zinc-950/80 p-8 transition-all hover:border-[#5A43FF] hover:bg-zinc-900/90 hover:shadow-[0_0_40px_rgba(90,67,255,0.25)]">
                 <div className="flex flex-col items-center space-y-6 text-center">
                     <div className="grid h-24 w-24 place-items-center rounded-2xl bg-[rgba(90,67,255,0.18)] shadow-[0_0_30px_rgba(90,67,255,0.45)] transition group-hover:bg-[rgba(90,67,255,0.28)]">
@@ -252,10 +257,12 @@ export default function HomePage() {
                     </div>
                 </div>
                 </div>
-            </Link>
+              </Link>
+            )}
 
-            {/* Stripe Onboarding Card */}
-            <div
+            {/* Stripe Onboarding Card - only show if user needs to onboard */}
+            {needsStripeOnboarding && (
+              <div
                 onClick={async () => {
                 const token = localStorage.getItem("token");
                 if (!token) return;
@@ -275,7 +282,7 @@ export default function HomePage() {
                 }
                 }}
                 className="group cursor-pointer rounded-3xl border border-zinc-800 bg-zinc-950/80 p-8 transition-all hover:border-[#47E6B1] hover:bg-zinc-900/90 hover:shadow-[0_0_40px_rgba(71,230,177,0.25)]"
-            >
+              >
                 <div className="flex flex-col items-center space-y-6 text-center">
                 <div className="grid h-24 w-24 place-items-center rounded-2xl bg-[rgba(71,230,177,0.16)] p-4 shadow-[0_0_26px_rgba(71,230,177,0.4)] transition group-hover:bg-[rgba(71,230,177,0.24)]">
                     <Image
@@ -299,15 +306,14 @@ export default function HomePage() {
                     </div>
                 </div>
                 </div>
+              </div>
+            )}
             </div>
-            </div>
-        </div>
+          </div>
         )}
 
-        </div>
-
-        {/* Main Dashboard Content */}
-        {hasClubs && (
+        {/* Main Dashboard Content - only show when both setup steps are complete */}
+        {hasClubs && !needsStripeOnboarding && (
           <div className="space-y-6">
             {/* Top Stats Row */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

@@ -1,0 +1,472 @@
+"use client";
+
+import * as React from "react";
+import Link from "next/link";
+import {
+  Bell,
+  Users,
+  DollarSign,
+  CalendarDays,
+  ArrowRight,
+  PlusCircle,
+  CreditCard,
+  LayoutDashboard,
+  Settings,
+} from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardHeader,
+  CardContent,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+
+// Types are optional but nice to have
+type Club = {
+  id: string;
+  name: string;
+  description?: string | null;
+  balance?: number | null;
+  memberCount?: number | null;
+};
+
+type ActionItem = {
+  id: string;
+  title: string;
+  amount: number;
+  clubId: string;
+};
+
+type Activity = {
+  id: string;
+  type: "payment" | "payout";
+  amount: number;
+  user: string;
+  clubId: string;
+};
+
+type Props = {
+  userName: string;
+  clubs: Club[];
+  stats: {
+    // you can adjust this to your real shape per club
+    [clubId: string]: {
+      totalMembers: number;
+      balance: number;
+      upcomingDue?: number;
+    };
+  };
+  actionItems: ActionItem[];
+  recentActivity: Activity[];
+};
+
+export default function ClubDashboardShell({
+  userName,
+  clubs,
+  stats,
+  actionItems,
+  recentActivity,
+}: Props) {
+  const [activeClubId, setActiveClubId] = React.useState<string | undefined>(
+    clubs[0]?.id
+  );
+
+  const activeClub =
+    clubs.find((c) => c.id === activeClubId) || clubs[0] || null;
+
+  const clubStats = activeClub
+    ? stats[activeClub.id] || {
+        totalMembers: activeClub.memberCount ?? 0,
+        balance: activeClub.balance ?? 0,
+      }
+    : { totalMembers: 0, balance: 0 };
+
+  const clubActions = activeClub
+    ? actionItems.filter((a) => a.clubId === activeClub.id)
+    : [];
+
+  const clubActivity = activeClub
+    ? recentActivity.filter((a) => a.clubId === activeClub.id)
+    : [];
+
+  return (
+    <div className="flex min-h-screen bg-background text-foreground">
+      {/* SIDEBAR */}
+      <aside className="hidden w-60 border-r bg-background/60 px-4 py-4 lg:flex lg:flex-col">
+        <div className="mb-8 flex items-center gap-2 px-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500 text-sm font-semibold text-white">
+            T
+          </div>
+          <span className="text-base font-semibold tracking-tight">Tally</span>
+        </div>
+
+        <nav className="space-y-1 text-sm">
+          <SidebarLink icon={LayoutDashboard} label="Overview" href="/home" />
+          <SidebarLink icon={CalendarDays} label="Events" href="/events" />
+          <SidebarLink icon={Users} label="Members" href="/members" />
+          <SidebarLink
+            icon={CreditCard}
+            label="Payments"
+            href="/payments"
+          />
+          <SidebarLink icon={DollarSign} label="Payouts" href="/payouts" />
+          <Separator className="my-4" />
+          <SidebarLink icon={Settings} label="Settings" href="/settings" />
+        </nav>
+
+        <div className="mt-auto pt-6">
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full justify-between gap-2"
+          >
+            <span className="text-xs text-muted-foreground">
+              Need help? View docs
+            </span>
+            <ArrowRight className="h-3 w-3" />
+          </Button>
+        </div>
+      </aside>
+
+      {/* MAIN */}
+      <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
+        {/* Top bar */}
+        <div className="mb-6 flex items-center justify-between gap-4">
+          <div>
+            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+              Dashboard
+            </p>
+            <h1 className="mt-1 text-2xl font-semibold sm:text-3xl">
+              Welcome back, {userName}
+            </h1>
+          </div>
+          <Button
+            variant="outline"
+            size="icon"
+            className="relative border-border/60"
+          >
+            <Bell className="h-4 w-4" />
+            {/* unread dot */}
+            <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-emerald-500" />
+          </Button>
+        </div>
+
+        {/* Club switcher row */}
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-muted-foreground">Viewing club</span>
+            <Select
+              value={activeClub?.id}
+              onValueChange={(val: string) => setActiveClubId(val)}
+            >
+              <SelectTrigger className="w-56 bg-background/80">
+                <SelectValue placeholder="Select a club" />
+              </SelectTrigger>
+              <SelectContent>
+                {clubs.map((club) => (
+                  <SelectItem key={club.id} value={club.id}>
+                    {club.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex gap-2">
+            <Button asChild size="sm" variant="outline">
+              <Link href="/clubs/new">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                New club
+              </Link>
+            </Button>
+            <Button asChild size="sm">
+              <Link href="/events/new">
+                <CalendarDays className="mr-2 h-4 w-4" />
+                New event
+              </Link>
+            </Button>
+          </div>
+        </div>
+
+        {activeClub ? (
+          <ClubDashboard
+            club={activeClub}
+            stats={clubStats}
+            actionItems={clubActions}
+            recentActivity={clubActivity}
+          />
+        ) : (
+          <EmptyState />
+        )}
+      </main>
+    </div>
+  );
+}
+
+/* --- Sub-components --- */
+
+function SidebarLink({
+  icon: Icon,
+  label,
+  href,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  href: string;
+}) {
+  return (
+    <Button
+      asChild
+      variant="ghost"
+      size="sm"
+      className="w-full justify-start gap-2 px-2 text-sm font-normal text-muted-foreground hover:bg-muted hover:text-foreground"
+    >
+      <Link href={href}>
+        <Icon className="h-4 w-4" />
+        <span>{label}</span>
+      </Link>
+    </Button>
+  );
+}
+
+function ClubDashboard({
+  club,
+  stats,
+  actionItems,
+  recentActivity,
+}: {
+  club: Club;
+  stats: { totalMembers: number; balance: number; upcomingDue?: number };
+  actionItems: ActionItem[];
+  recentActivity: Activity[];
+}) {
+  return (
+    <div className="space-y-6">
+      {/* TOP METRICS */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card className="border-border/70 bg-card/60">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs font-medium text-muted-foreground">
+              Total members
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex items-end justify-between">
+            <div className="text-3xl font-semibold sm:text-4xl">
+              {stats.totalMembers}
+            </div>
+            <Users className="h-5 w-5 text-muted-foreground" />
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/70 bg-card/60">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs font-medium text-muted-foreground">
+              Club balance
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex items-end justify-between">
+            <div className="text-3xl font-semibold sm:text-4xl">
+              ${stats.balance.toFixed(2)}
+            </div>
+            <DollarSign className="h-5 w-5 text-emerald-400" />
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/70 bg-card/60">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs font-medium text-muted-foreground">
+              Upcoming dues
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex items-end justify-between">
+            <div className="text-3xl font-semibold sm:text-4xl">
+              {stats.upcomingDue ? `$${stats.upcomingDue.toFixed(2)}` : "—"}
+            </div>
+            <CalendarDays className="h-5 w-5 text-muted-foreground" />
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* MAIN GRID: quick actions + tasks + recent activity */}
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1.3fr)]">
+        {/* left column: quick actions + recent */}
+        <div className="space-y-6">
+          {/* Quick actions */}
+          <Card className="border-border/70 bg-card/60">
+            <CardHeader>
+              <CardTitle className="text-sm font-semibold">
+                Quick actions
+              </CardTitle>
+              <CardDescription>
+                Common flows for {club.name ?? "your club"}.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-3 sm:grid-cols-2">
+              <Button
+                asChild
+                variant="outline"
+                className="justify-start gap-2"
+              >
+                <Link href="/events/new">
+                  <CalendarDays className="h-4 w-4" />
+                  Create event
+                </Link>
+              </Button>
+              <Button
+                asChild
+                variant="outline"
+                className="justify-start gap-2"
+              >
+                <Link href="/members/add">
+                  <Users className="h-4 w-4" />
+                  Add member
+                </Link>
+              </Button>
+              <Button
+                asChild
+                variant="outline"
+                className="justify-start gap-2"
+              >
+                <Link href="/payouts">
+                  <DollarSign className="h-4 w-4" />
+                  Request payout
+                </Link>
+              </Button>
+              <Button
+                asChild
+                variant="outline"
+                className="justify-start gap-2"
+              >
+                <Link href="/reminders">
+                  <Bell className="h-4 w-4" />
+                  Send reminders
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Recent activity */}
+          <Card className="border-border/70 bg-card/60">
+            <CardHeader className="flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-sm font-semibold">
+                  Recent activity
+                </CardTitle>
+                <CardDescription>
+                  Latest payments and payouts in this club.
+                </CardDescription>
+              </div>
+              <Button asChild variant="ghost" size="sm">
+                <Link href="/activity">
+                  View all
+                  <ArrowRight className="ml-1 h-3 w-3" />
+                </Link>
+              </Button>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {recentActivity.length === 0 && (
+                <p className="text-sm text-muted-foreground">
+                  No activity yet. Once members start paying, you’ll see it
+                  here.
+                </p>
+              )}
+              {recentActivity.slice(0, 5).map((item: Activity) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between rounded-lg border border-border/70 bg-muted/40 px-3 py-2 text-sm"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-md bg-background">
+                      {item.type === "payment" ? (
+                        <DollarSign className="h-4 w-4 text-emerald-400" />
+                      ) : (
+                        <CreditCard className="h-4 w-4 text-indigo-400" />
+                      )}
+                    </div>
+                    <div>
+                      <div className="font-medium">
+                        {item.amount > 0 ? "+" : "-"}$
+                        {Math.abs(item.amount).toFixed(2)}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {item.type === "payment" ? "Payment" : "Payout"} •{" "}
+                        {item.user.split("@")[0] || "Member"}
+                      </div>
+                    </div>
+                  </div>
+                  {/* You can add timestamp here */}
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* right column: tasks */}
+        <Card className="border-border/70 bg-card/60">
+          <CardHeader>
+            <CardTitle className="text-sm font-semibold">Tasks</CardTitle>
+            <CardDescription>
+              Things to take care of for this club.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {actionItems.length === 0 && (
+              <p className="text-sm text-muted-foreground">
+                You're all caught up. New tasks will appear here when members
+                fall behind on payments or attendance.
+              </p>
+            )}
+            {actionItems.slice(0, 5).map((item: ActionItem) => (
+              <Button
+                key={item.id}
+                asChild
+                variant="outline"
+                className="w-full justify-between border-border/70 bg-muted/40 text-left text-sm font-normal"
+              >
+                <Link href="/events">
+                  <span className="flex flex-col">
+                    <span className="font-medium">{item.title}</span>
+                    <span className="text-xs text-muted-foreground">
+                      ${item.amount.toFixed(2)} outstanding
+                    </span>
+                  </span>
+                  <ArrowRight className="h-3 w-3" />
+                </Link>
+              </Button>
+            ))}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+function EmptyState() {
+  return (
+    <Card className="mt-10 border-dashed border-border/70 bg-card/40">
+      <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
+        <h2 className="text-lg font-semibold">No clubs yet</h2>
+        <p className="max-w-sm text-sm text-muted-foreground">
+          Create your first club to start tracking dues, payouts, and
+          attendance in one place.
+        </p>
+        <Button asChild className="mt-2">
+          <Link href="/clubs/new">
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Create a club
+          </Link>
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
