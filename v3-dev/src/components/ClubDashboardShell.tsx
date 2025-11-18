@@ -24,74 +24,88 @@ import { Separator } from "@/components/ui/separator";
 import { MembersDataTable, type Member } from "@/components/MembersDataTable";
 import { useClub } from "@/contexts/ClubContext";
 
-// Types are optional but nice to have
 type Club = {
   id: string;
   name: string;
   description?: string | null;
   balance?: number | null;
   memberCount?: number | null;
+  role?: string;
 };
 
 type ActionItem = {
   id: string;
   title: string;
   amount: number;
-  clubId: string;
+  eventId: string;
+  assignedAt: string;
 };
 
 type Activity = {
   id: string;
-  type: "payment" | "payout";
+  type: string;
   amount: number;
   user: string;
-  clubId: string;
+  createdAt: string;
+  description: string;
+};
+
+type Stats = {
+  totalMembers: number;
+  balance: number;
+  upcomingDue: number;
 };
 
 type Props = {
   userName: string;
-  clubs: Club[];
-  stats: {
-    // you can adjust this to your real shape per club
-    [clubId: string]: {
-      totalMembers: number;
-      balance: number;
-      upcomingDue?: number;
-    };
-  };
-  actionItems: ActionItem[];
-  recentActivity: Activity[];
-  members: {
-    [clubId: string]: Member[];
-  };
 };
 
-export default function ClubDashboardShell({
-  userName,
-  clubs,
-  stats,
-  actionItems,
-  recentActivity,
-  members,
-}: Props) {
+export default function ClubDashboardShell({ userName }: Props) {
   const { activeClub } = useClub();
+  const [stats, setStats] = React.useState<Stats>({
+    totalMembers: 0,
+    balance: 0,
+    upcomingDue: 0,
+  });
+  const [actionItems, setActionItems] = React.useState<ActionItem[]>([]);
+  const [recentActivity, setRecentActivity] = React.useState<Activity[]>([]);
+  const [members, setMembers] = React.useState<Member[]>([]);
+  const [loading, setLoading] = React.useState(true);
 
-  const clubStats = activeClub
-    ? stats[activeClub.id] || {
-        totalMembers: activeClub.memberCount ?? 0,
-        balance: activeClub.balance ?? 0,
-      }
-    : { totalMembers: 0, balance: 0 };
+  React.useEffect(() => {
+    if (!activeClub?.id) return;
 
-  const clubActions = activeClub
-    ? actionItems.filter((a) => a.clubId === activeClub.id)
-    : [];
+    const token = localStorage.getItem("token");
+    if (!token) return;
 
-  const clubActivity = activeClub
-    ? recentActivity.filter((a) => a.clubId === activeClub.id)
-    : [];
+    setLoading(true);
 
-  const clubMembers = activeClub ? members[activeClub.id] || [] : [];
+    // Fetch stats and activity
+    Promise.all([
+      fetch(`/api/clubs/${activeClub.id}/stats`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }).then((r) => r.json()),
+      fetch(`/api/clubs/${activeClub.id}/members`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }).then((r) => r.json()),
+    ])
+      .then(([statsData, membersData]) => {
+        if (statsData.stats) {
+          setStats(statsData.stats);
+        }
+        if (statsData.recentActivity) {
+          setRecentActivity(statsData.recentActivity);
+        }
+        if (statsData.actionItems) {
+          setActionItems(statsData.actionItems);
+        }
+        if (membersData.members) {
+          setMembers(membersData.members);
+        }
+      })
+      .catch((err) => console.error("Failed to fetch dashboard data:", err))
+      .finally(() => setLoading(false));
+  }, [activeClub?.id]);
 
   return (
     <div className="px-4 py-6 sm:px-6 lg:px-8">
@@ -135,10 +149,10 @@ export default function ClubDashboardShell({
         {activeClub ? (
           <ClubDashboard
             club={activeClub}
-            stats={clubStats}
-            actionItems={clubActions}
-            recentActivity={clubActivity}
-            members={clubMembers}
+            stats={stats}
+            actionItems={actionItems}
+            recentActivity={recentActivity}
+            members={members}
           />
         ) : (
           <EmptyState />

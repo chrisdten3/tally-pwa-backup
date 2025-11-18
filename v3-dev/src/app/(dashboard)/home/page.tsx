@@ -298,39 +298,6 @@ export default function HomePage() {
         {hasClubs && !needsStripeOnboarding && (
           <ClubDashboardShell
             userName={user?.name?.split(" ")[0] || "User"}
-            clubs={clubs.map((c) => ({
-              id: c.id || "",
-              name: c.name || "",
-              description: c.description || null,
-              balance: stats.totalReceived,
-              memberCount: 240, // TODO: Replace with actual member count from API
-            }))}
-            stats={clubs.reduce((acc, c) => {
-              acc[c.id || ""] = {
-                totalMembers: 240, // TODO: Replace with actual member count
-                balance: stats.totalReceived,
-                upcomingDue: stats.pendingPayments,
-              };
-              return acc;
-            }, {} as Record<string, { totalMembers: number; balance: number; upcomingDue?: number }>)}
-            actionItems={actionItems.map((item) => ({
-              id: item.id,
-              title: item.title,
-              amount: item.amount,
-              clubId: clubs.find((c) => c.name === item.club)?.id || "",
-            }))}
-            recentActivity={recentActivity.map((activity) => ({
-              id: activity.id,
-              type: activity.type as "payment" | "payout",
-              amount: activity.amount,
-              user: activity.user,
-              clubId: clubs.find((c) => c.name === activity.club)?.id || "",
-            }))}
-            members={clubs.reduce((acc, c) => {
-              // TODO: Replace with actual member data from API
-              acc[c.id || ""] = [];
-              return acc;
-            }, {} as Record<string, any[]>)}
           />
         )}
 
