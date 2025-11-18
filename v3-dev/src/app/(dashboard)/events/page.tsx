@@ -7,6 +7,7 @@ import { CalendarDays } from "lucide-react";
 import { useClub } from "@/contexts/ClubContext";
 import { CreateEventModal } from "@/components/CreateEventModal";
 import { EventShareLink } from "@/components/EventShareLink";
+import { EventDetailsModal } from "@/components/EventDetailsModal";
 
 type Event = {
   id: string;
@@ -32,6 +33,7 @@ export default function EventsPage() {
   const { activeClub } = useClub();
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
   const fetchEvents = () => {
     if (!activeClub?.id) return;
@@ -159,7 +161,13 @@ export default function EventsPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <EventShareLink eventId={event.id} eventTitle={event.title} />
-                    <Button variant="outline" size="sm">View</Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setSelectedEvent(event)}
+                    >
+                      View
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -167,6 +175,15 @@ export default function EventsPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Event Details Modal */}
+      {selectedEvent && (
+        <EventDetailsModal
+          event={selectedEvent}
+          open={!!selectedEvent}
+          onOpenChange={(open) => !open && setSelectedEvent(null)}
+        />
+      )}
     </div>
   );
 }
