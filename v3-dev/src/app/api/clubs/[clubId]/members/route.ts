@@ -5,14 +5,14 @@ import { supabaseAdmin, getUserByAccessToken } from "@/lib/supabase";
  * GET /api/clubs/[clubId]/members
  * Fetch all members of a specific club with their details
  */
-export async function GET(req: Request, { params }: { params: { clubId: string } }) {
+export async function GET(req: Request, { params }: { params: Promise<{ clubId: string }> }) {
   try {
     const auth = req.headers.get("authorization") || "";
     const token = auth.startsWith("Bearer ") ? auth.slice(7) : null;
     const authUser = await getUserByAccessToken(token ?? undefined);
     if (!authUser) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
-    const { clubId } = params;
+    const { clubId } = await params;
 
     // Verify user is a member of this club
     const { data: membership } = await supabaseAdmin
@@ -90,14 +90,14 @@ export async function GET(req: Request, { params }: { params: { clubId: string }
  * DELETE /api/clubs/[clubId]/members
  * Remove a member from a club (admin only)
  */
-export async function DELETE(req: Request, { params }: { params: { clubId: string } }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ clubId: string }> }) {
   try {
     const auth = req.headers.get("authorization") || "";
     const token = auth.startsWith("Bearer ") ? auth.slice(7) : null;
     const authUser = await getUserByAccessToken(token ?? undefined);
     if (!authUser) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
-    const { clubId } = params;
+    const { clubId } = await params;
     const { searchParams } = new URL(req.url);
     const memberIdToRemove = searchParams.get("userId");
 

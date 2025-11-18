@@ -82,7 +82,7 @@ export function CreateEventModal({ onEventCreated }: CreateEventModalProps) {
           clubId: activeClub.id,
           title: formData.title,
           description: formData.description,
-          amount: parseFloat(formData.amount),
+          amount: Math.round(parseFloat(formData.amount) * 100), // Convert dollars to cents
           expiresAt: formData.expiresAt || null,
           assigneeUserIds: Array.from(selectedMembers),
         }),
@@ -207,25 +207,28 @@ export function CreateEventModal({ onEventCreated }: CreateEventModalProps) {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium">
-                Assign Members * ({selectedMembers.size} selected)
+                Assign Members ({selectedMembers.size} selected)
               </label>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={toggleAll}
-                disabled={loadingMembers}
+                disabled={loadingMembers || members.length === 0}
               >
                 {selectedMembers.size === members.length ? "Deselect All" : "Select All"}
               </Button>
             </div>
+            <p className="text-xs text-muted-foreground">
+              Select existing members or leave empty to allow anyone with the link to pay
+            </p>
             {loadingMembers ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               </div>
             ) : members.length === 0 ? (
               <p className="text-sm text-muted-foreground py-4">
-                No members found. Add members to your club first.
+                No members yet. Share the event link to let users pay and join automatically.
               </p>
             ) : (
               <div className="border rounded-md max-h-60 overflow-y-auto">
@@ -265,7 +268,7 @@ export function CreateEventModal({ onEventCreated }: CreateEventModalProps) {
             </Button>
             <Button
               type="submit"
-              disabled={loading || selectedMembers.size === 0 || !formData.title || !formData.amount}
+              disabled={loading || !formData.title || !formData.amount}
             >
               {loading ? (
                 <>

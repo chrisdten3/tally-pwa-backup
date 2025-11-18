@@ -5,14 +5,14 @@ import { supabaseAdmin, getUserByAccessToken } from "@/lib/supabase";
  * GET /api/clubs/[clubId]/events
  * Fetch all events for a specific club
  */
-export async function GET(req: Request, { params }: { params: { clubId: string } }) {
+export async function GET(req: Request, { params }: { params: Promise<{ clubId: string }> }) {
   try {
     const auth = req.headers.get("authorization") || "";
     const token = auth.startsWith("Bearer ") ? auth.slice(7) : null;
     const authUser = await getUserByAccessToken(token ?? undefined);
     if (!authUser) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
-    const { clubId } = params;
+    const { clubId } = await params;
 
     // Verify user is a member of this club
     const { data: membership } = await supabaseAdmin

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { CalendarDays } from "lucide-react";
 import { useClub } from "@/contexts/ClubContext";
 import { CreateEventModal } from "@/components/CreateEventModal";
+import { EventShareLink } from "@/components/EventShareLink";
 
 type Event = {
   id: string;
@@ -44,8 +45,11 @@ export default function EventsPage() {
     })
       .then((r) => r.json())
       .then((data) => {
+        console.log("Events API response:", data);
         if (data.events) {
           setEvents(data.events);
+        } else if (data.error) {
+          console.error("Events API error:", data.error);
         }
       })
       .catch((err) => console.error("Failed to fetch events:", err))
@@ -66,13 +70,13 @@ export default function EventsPage() {
 
   const now = new Date();
   const upcomingEvents = events.filter((e) => 
-    e.isActive && (!e.expiresAt || new Date(e.expiresAt) > now)
+    !e.expiresAt || new Date(e.expiresAt) > now
   );
   const pastEvents = events.filter((e) => 
-    !e.isActive || (e.expiresAt && new Date(e.expiresAt) <= now)
+    e.expiresAt && new Date(e.expiresAt) <= now
   );
   const totalAttendance = events.length > 0
-    ? events.reduce((sum, e) => sum + (e.stats.paidCount / Math.max(e.stats.totalAssignees, 1)), 0) / events.length * 100
+    ? events.reduce((sum, e) => sum + (e.stats.totalAssignees > 0 ? (e.stats.paidCount / e.stats.totalAssignees) : 0), 0) / events.length * 100
     : 0;
 
   return (
@@ -147,11 +151,16 @@ export default function EventsPage() {
                   <div>
                     <div className="font-medium">{event.title}</div>
                     <div className="text-sm text-muted-foreground">
-                      ${event.amount.toFixed(2)} • {event.stats.paidCount}/{event.stats.totalAssignees} paid
+                      ${(event.amount / 100).toFixed(2)}
+                      {event.stats.totalAssignees > 0 && ` • ${event.stats.paidCount}/${event.stats.totalAssignees} paid`}
+                      {event.stats.totalAssignees === 0 && " • Open to all (via link)"}
                       {event.expiresAt && ` • Expires ${new Date(event.expiresAt).toLocaleDateString()}`}
                     </div>
                   </div>
-                  <Button variant="outline" size="sm">View</Button>
+                  <div className="flex items-center gap-2">
+                    <EventShareLink eventId={event.id} eventTitle={event.title} />
+                    <Button variant="outline" size="sm">View</Button>
+                  </div>
                 </div>
               ))}
             </div>

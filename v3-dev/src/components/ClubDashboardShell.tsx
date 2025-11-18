@@ -91,16 +91,16 @@ export default function ClubDashboardShell({ userName }: Props) {
       }).then((r) => r.json()),
     ])
       .then(([statsData, membersData]) => {
-        if (statsData.stats) {
+        if (statsData?.stats) {
           setStats(statsData.stats);
         }
-        if (statsData.recentActivity) {
+        if (statsData?.recentActivity) {
           setRecentActivity(statsData.recentActivity);
         }
-        if (statsData.actionItems) {
+        if (statsData?.actionItems) {
           setActionItems(statsData.actionItems);
         }
-        if (membersData.members) {
+        if (membersData?.members) {
           setMembers(membersData.members);
         }
       })
@@ -153,10 +153,14 @@ export default function ClubDashboardShell({ userName }: Props) {
                   headers: { Authorization: `Bearer ${token}` },
                 }).then(r => r.json())
               ]).then(([statsData, membersData]) => {
-                if (statsData) {
+                if (statsData?.stats) {
                   setStats(statsData.stats);
-                  setActionItems(statsData.actionItems || []);
-                  setRecentActivity(statsData.recentActivity || []);
+                }
+                if (statsData?.actionItems) {
+                  setActionItems(statsData.actionItems);
+                }
+                if (statsData?.recentActivity) {
+                  setRecentActivity(statsData.recentActivity);
                 }
                 if (membersData?.members) {
                   setMembers(membersData.members);
@@ -208,7 +212,7 @@ function ClubDashboard({
           </CardHeader>
           <CardContent className="flex items-end justify-between">
             <div className="text-3xl font-semibold sm:text-4xl">
-              {stats.totalMembers}
+              {stats?.totalMembers ?? 0}
             </div>
             <Users className="h-5 w-5 text-muted-foreground" />
           </CardContent>
@@ -222,7 +226,7 @@ function ClubDashboard({
           </CardHeader>
           <CardContent className="flex items-end justify-between">
             <div className="text-3xl font-semibold sm:text-4xl">
-              ${stats.balance.toFixed(2)}
+              ${((stats?.balance ?? 0) / 100).toFixed(2)}
             </div>
             <DollarSign className="h-5 w-5 text-emerald-400" />
           </CardContent>
@@ -236,7 +240,7 @@ function ClubDashboard({
           </CardHeader>
           <CardContent className="flex items-end justify-between">
             <div className="text-3xl font-semibold sm:text-4xl">
-              {stats.upcomingDue ? `$${stats.upcomingDue.toFixed(2)}` : "—"}
+              {stats?.upcomingDue ? `$${(stats.upcomingDue / 100).toFixed(2)}` : "—"}
             </div>
             <CalendarDays className="h-5 w-5 text-muted-foreground" />
           </CardContent>
