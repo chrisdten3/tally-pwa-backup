@@ -36,6 +36,72 @@ export default function TestPage() {
           clubId: "1",
         },
       ]}
+      members={{
+        "1": [
+          {
+            id: "m1",
+            firstName: "Alex",
+            lastName: "Johnson",
+            phoneNumber: "(555) 123-4567",
+            dateJoined: "2024-01-15",
+            eventsPaid: 12,
+            eventsOutstanding: 2,
+            totalPaid: 300,
+          },
+          {
+            id: "m2",
+            firstName: "Sarah",
+            lastName: "Williams",
+            phoneNumber: "(555) 234-5678",
+            dateJoined: "2024-02-20",
+            eventsPaid: 10,
+            eventsOutstanding: 0,
+            totalPaid: 250,
+          },
+          {
+            id: "m3",
+            firstName: "Michael",
+            lastName: "Brown",
+            phoneNumber: "(555) 345-6789",
+            dateJoined: "2024-03-10",
+            eventsPaid: 8,
+            eventsOutstanding: 1,
+            totalPaid: 200,
+          },
+          {
+            id: "m4",
+            firstName: "Emily",
+            lastName: "Davis",
+            phoneNumber: "(555) 456-7890",
+            dateJoined: "2024-04-05",
+            eventsPaid: 15,
+            eventsOutstanding: 0,
+            totalPaid: 375,
+          },
+          {
+            id: "m5",
+            firstName: "James",
+            lastName: "Miller",
+            phoneNumber: "(555) 567-8901",
+            dateJoined: "2024-05-12",
+            eventsPaid: 5,
+            eventsOutstanding: 3,
+            totalPaid: 125,
+          },
+        ],
+        "2": [
+          {
+            id: "m6",
+            firstName: "Jessica",
+            lastName: "Wilson",
+            phoneNumber: "(555) 678-9012",
+            dateJoined: "2024-06-01",
+            eventsPaid: 6,
+            eventsOutstanding: 1,
+            totalPaid: 150,
+          },
+        ],
+      }}
     />
   );
 }

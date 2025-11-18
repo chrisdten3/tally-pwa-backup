@@ -30,6 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { MembersDataTable, type Member } from "@/components/MembersDataTable";
 
 // Types are optional but nice to have
 type Club = {
@@ -68,6 +69,9 @@ type Props = {
   };
   actionItems: ActionItem[];
   recentActivity: Activity[];
+  members: {
+    [clubId: string]: Member[];
+  };
 };
 
 export default function ClubDashboardShell({
@@ -76,6 +80,7 @@ export default function ClubDashboardShell({
   stats,
   actionItems,
   recentActivity,
+  members,
 }: Props) {
   const [activeClubId, setActiveClubId] = React.useState<string | undefined>(
     clubs[0]?.id
@@ -98,6 +103,8 @@ export default function ClubDashboardShell({
   const clubActivity = activeClub
     ? recentActivity.filter((a) => a.clubId === activeClub.id)
     : [];
+
+  const clubMembers = activeClub ? members[activeClub.id] || [] : [];
 
   return (
     <div className="flex min-h-screen bg-background text-foreground">
@@ -204,6 +211,7 @@ export default function ClubDashboardShell({
             stats={clubStats}
             actionItems={clubActions}
             recentActivity={clubActivity}
+            members={clubMembers}
           />
         ) : (
           <EmptyState />
@@ -244,11 +252,13 @@ function ClubDashboard({
   stats,
   actionItems,
   recentActivity,
+  members,
 }: {
   club: Club;
   stats: { totalMembers: number; balance: number; upcomingDue?: number };
   actionItems: ActionItem[];
   recentActivity: Activity[];
+  members: Member[];
 }) {
   return (
     <div className="space-y-6">
@@ -411,41 +421,27 @@ function ClubDashboard({
           </Card>
         </div>
 
-        {/* right column: tasks */}
-        <Card className="border-border/70 bg-card/60">
-          <CardHeader>
-            <CardTitle className="text-sm font-semibold">Tasks</CardTitle>
-            <CardDescription>
-              Things to take care of for this club.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {actionItems.length === 0 && (
-              <p className="text-sm text-muted-foreground">
-                You're all caught up. New tasks will appear here when members
-                fall behind on payments or attendance.
-              </p>
-            )}
-            {actionItems.slice(0, 5).map((item: ActionItem) => (
-              <Button
-                key={item.id}
-                asChild
-                variant="outline"
-                className="w-full justify-between border-border/70 bg-muted/40 text-left text-sm font-normal"
-              >
-                <Link href="/events">
-                  <span className="flex flex-col">
-                    <span className="font-medium">{item.title}</span>
-                    <span className="text-xs text-muted-foreground">
-                      ${item.amount.toFixed(2)} outstanding
-                    </span>
-                  </span>
-                  <ArrowRight className="h-3 w-3" />
-                </Link>
-              </Button>
-            ))}
-          </CardContent>
-        </Card>
+        {/* right column: members data table */}
+        <MembersDataTable
+          members={members}
+          clubId={club.id}
+          onAddMember={(member) => {
+            console.log("Add member:", member);
+            // TODO: Implement API call to add member
+          }}
+          onDeleteMember={(memberId) => {
+            console.log("Delete member:", memberId);
+            // TODO: Implement API call to delete member
+          }}
+          onSendReminder={(memberId) => {
+            console.log("Send reminder to:", memberId);
+            // TODO: Implement API call to send reminder
+          }}
+          onImportCSV={(file) => {
+            console.log("Import CSV:", file);
+            // TODO: Implement CSV import logic
+          }}
+        />
       </div>
     </div>
   );
