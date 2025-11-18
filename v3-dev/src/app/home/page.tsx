@@ -1,12 +1,11 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import Button from "@/components/Button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-
-
 import {
   Users,
   UserPlus,
@@ -201,12 +200,14 @@ export default function HomePage() {
     <main className="min-h-screen w-full bg-[#0B0B0E] text-zinc-100">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 py-6 md:py-8">
         {/* Header */}
-        <header className="mb-6">
+        <header className="mb-8">
           <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold">
-              Welcome back, {user?.name?.split(" ")[0] || "Alex"}
-            </h1>
-            <button className="p-2 rounded-lg hover:bg-zinc-800 transition relative">
+            <div className="rounded-2xl bg-gradient-to-r from-indigo-600/10 to-[#4737fb]/10 border border-indigo-500/20 px-6 py-4">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-400 to-[#4737fb] bg-clip-text text-transparent">
+                {hasClubs ? 'Welcome back' : 'Welcome'}, {user?.name?.split(" ")[0] || "Alex"}
+              </h1>
+            </div>
+            <button className="p-3 rounded-xl hover:bg-zinc-800 transition relative border border-white/10">
               <Bell size={24} />
               {actionItems.length > 0 && (
                 <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-rose-500 text-white text-xs font-semibold flex items-center justify-center">
@@ -220,92 +221,89 @@ export default function HomePage() {
         {/* Alerts Section */}
         <div className="space-y-4 mb-8">
           {/* No clubs alert */}
-            {!hasClubs && (
-            <Card className="relative overflow-hidden border border-slate-800/80 bg-gradient-to-r from-slate-950 via-slate-950 to-indigo-950/60 text-slate-50">
-                {/* soft glow background */}
-                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(79,70,229,0.22),transparent_55%)]" />
+        {!hasClubs && (
+        <div className="space-y-6">
+            <div className="mb-8 text-center">
+            <h2 className="mb-3 text-3xl font-bold">Let&apos;s Get You Set Up</h2>
+            <p className="mx-auto max-w-2xl text-lg text-zinc-400">
+                Complete these two steps to start managing your club payments and events.
+            </p>
+            </div>
 
-                <CardHeader className="relative flex flex-row items-start justify-between gap-4 pb-3">
-                <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-indigo-500/15 text-indigo-400">
-                    <Sparkles className="h-4 w-4" />
+            <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-2">
+            {/* Create Club Card */}
+            <Link href="/clubs/new">
+                <div className="group cursor-pointer rounded-3xl border border-zinc-800 bg-zinc-950/80 p-8 transition-all hover:border-[#5A43FF] hover:bg-zinc-900/90 hover:shadow-[0_0_40px_rgba(90,67,255,0.25)]">
+                <div className="flex flex-col items-center space-y-6 text-center">
+                    <div className="grid h-24 w-24 place-items-center rounded-2xl bg-[rgba(90,67,255,0.18)] shadow-[0_0_30px_rgba(90,67,255,0.45)] transition group-hover:bg-[rgba(90,67,255,0.28)]">
+                    <UserPlus size={48} className="text-white" />
                     </div>
                     <div>
-                    <CardTitle className="text-base font-semibold">
-                        Get started with Tally
-                    </CardTitle>
-                    <CardDescription className="mt-1 text-xs text-slate-300/80">
-                        You&apos;re not in any clubs yet. Create your first club or join an
-                        existing one to start tracking dues, events, and payouts in one place.
-                    </CardDescription>
+                    <h3 className="mb-3 text-2xl font-bold">Create Your Club</h3>
+                    <p className="text-base leading-relaxed text-zinc-300">
+                        Start your own club and invite members to manage payments and events together.
+                    </p>
+                    </div>
+                    <div className="pt-4">
+                    <div className="inline-flex items-center gap-2 rounded-xl bg-[#5A43FF] px-8 py-3 text-base font-semibold text-white shadow-[0_0_24px_rgba(90,67,255,0.35)] transition group-hover:bg-[#6C57FF]">
+                        Create Club
+                        <ArrowRight size={18} />
+                    </div>
                     </div>
                 </div>
+                </div>
+            </Link>
 
-                <span className="rounded-full border border-slate-700 bg-black/40 px-3 py-1 text-xs text-slate-300">
-                    Step 1 of 2
-                </span>
-                </CardHeader>
-
-                <CardContent className="relative flex flex-wrap items-center gap-3 pt-1">
-                <Link href="/clubs/new">
-                    <Button className="inline-flex items-center gap-2 bg-indigo-500 hover:bg-indigo-400">
-                    <UserPlus className="h-4 w-4" />
-                    Create club
-                    </Button>
-                </Link>
-
-                <Link href="/clubs/join">
-                    <Button
-                    variant="outline"
-                    className="inline-flex items-center gap-2 border-slate-600 bg-transparent text-slate-100 hover:bg-slate-900/80"
-                    >
-                    <Users className="h-4 w-4" />
-                    Join club
-                    </Button>
-                </Link>
-
-                <p className="ml-auto text-xs text-slate-400">
-                    You can add more clubs or change admins anytime.
-                </p>
-                </CardContent>
-            </Card>
-            )}
-
-          {/* Stripe onboarding alert for admins */}
-          {isAdmin && needsStripeOnboarding && (
-            <Alert variant="warning">
-              <AlertTitle>Action Required: Set Up Payouts</AlertTitle>
-              <AlertDescription>
-                <p className="mb-3">
-                  You&apos;re an admin but haven&apos;t completed Stripe onboarding. Complete this step to receive club payouts.
-                </p>
-                <button
-                  onClick={async () => {
-                    const token = localStorage.getItem("token");
-                    if (!token) return;
-                    try {
-                      const res = await fetch("/api/stripe/connect/onboard", {
-                        method: "POST",
-                        headers: { Authorization: `Bearer ${token}` },
-                      });
-                      const data = await res.json();
-                      if (data?.url) {
-                        window.location.href = data.url;
-                      } else {
-                        alert(data?.error || "Failed to start onboarding");
-                      }
-                    } catch {
-                      alert("Failed to start onboarding");
+            {/* Stripe Onboarding Card */}
+            <div
+                onClick={async () => {
+                const token = localStorage.getItem("token");
+                if (!token) return;
+                try {
+                    const res = await fetch("/api/stripe/connect/onboard", {
+                    method: "POST",
+                    headers: { Authorization: `Bearer ${token}` },
+                    });
+                    const data = await res.json();
+                    if (data?.url) {
+                    window.location.href = data.url;
+                    } else {
+                    alert(data?.error || "Failed to start onboarding");
                     }
-                  }}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-medium text-sm transition"
-                >
-                  <DollarSign size={16} />
-                  Complete Onboarding
-                </button>
-              </AlertDescription>
-            </Alert>
-          )}
+                } catch {
+                    alert("Failed to start onboarding");
+                }
+                }}
+                className="group cursor-pointer rounded-3xl border border-zinc-800 bg-zinc-950/80 p-8 transition-all hover:border-[#47E6B1] hover:bg-zinc-900/90 hover:shadow-[0_0_40px_rgba(71,230,177,0.25)]"
+            >
+                <div className="flex flex-col items-center space-y-6 text-center">
+                <div className="grid h-24 w-24 place-items-center rounded-2xl bg-[rgba(71,230,177,0.16)] p-4 shadow-[0_0_26px_rgba(71,230,177,0.4)] transition group-hover:bg-[rgba(71,230,177,0.24)]">
+                    <Image
+                    src="/stripe.png"
+                    alt="Stripe"
+                    width={80}
+                    height={80}
+                    className="object-contain"
+                    />
+                </div>
+                <div>
+                    <h3 className="mb-3 text-2xl font-bold">Onboard with Stripe</h3>
+                    <p className="text-base leading-relaxed text-zinc-300">
+                    Connect your bank account through Stripe to receive payments from your club.
+                    </p>
+                </div>
+                <div className="pt-4">
+                    <div className="inline-flex items-center gap-2 rounded-xl bg-[#47E6B1] px-8 py-3 text-base font-semibold text-slate-950 shadow-[0_0_24px_rgba(71,230,177,0.35)] transition group-hover:bg-[#63F0C3]">
+                    Connect Account
+                    <ArrowRight size={18} />
+                    </div>
+                </div>
+                </div>
+            </div>
+            </div>
+        </div>
+        )}
+
         </div>
 
         {/* Main Dashboard Content */}
