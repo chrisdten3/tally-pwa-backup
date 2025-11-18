@@ -3,9 +3,101 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Settings, User, Bell, CreditCard, Shield } from "lucide-react";
+import { Settings, User, Bell, CreditCard, Shield, CheckCircle, AlertCircle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function SettingsPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [stripeStatus, setStripeStatus] = useState<"connected" | "not_connected" | "loading">("loading");
+  const [isOnboarding, setIsOnboarding] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<{ type: "success" | "error" | null; message: string }>({ 
+    type: null, 
+    message: "" 
+  });
+
+  useEffect(() => {
+    // Check URL params for Stripe status
+    const stripeParam = searchParams.get("stripe");
+    if (stripeParam === "success") {
+      setStatusMessage({ type: "success", message: "Stripe account successfully connected!" });
+      // Clean up URL
+      router.replace("/settings");
+    } else if (stripeParam === "error") {
+      setStatusMessage({ type: "error", message: "There was an error connecting your Stripe account." });
+      router.replace("/settings");
+    } else if (stripeParam === "refresh") {
+      setStatusMessage({ type: "error", message: "Please complete the onboarding process." });
+      router.replace("/settings");
+    }
+
+    // Check current Stripe status
+    checkStripeStatus();
+  }, [searchParams]);
+
+  const checkStripeStatus = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setStripeStatus("not_connected");
+        return;
+      }
+
+      const res = await fetch("/api/auth/user", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setStripeStatus(data.user?.stripe_account_id ? "connected" : "not_connected");
+      } else {
+        setStripeStatus("not_connected");
+      }
+    } catch (error) {
+      console.error("Failed to check Stripe status:", error);
+      setStripeStatus("not_connected");
+    }
+  };
+
+  const handleStripeOnboarding = async () => {
+    setIsOnboarding(true);
+    setStatusMessage({ type: null, message: "" });
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setStatusMessage({ type: "error", message: "Please log in to connect Stripe." });
+        setIsOnboarding(false);
+        return;
+      }
+
+      const res = await fetch("/api/stripe/connect/onboard", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.url) {
+        // Redirect to Stripe onboarding
+        window.location.href = data.url;
+      } else {
+        setStatusMessage({ 
+          type: "error", 
+          message: data.error || "Failed to start Stripe onboarding" 
+        });
+        setIsOnboarding(false);
+      }
+    } catch (error) {
+      console.error("Stripe onboarding error:", error);
+      setStatusMessage({ 
+        type: "error", 
+        message: "An error occurred. Please try again." 
+      });
+      setIsOnboarding(false);
+    }
+  };
   return (
     <div className="px-4 py-6 sm:px-6 lg:px-8">
       <div className="mb-6">
@@ -16,6 +108,23 @@ export default function SettingsPage() {
           Account Settings
         </h1>
       </div>
+
+      {statusMessage.type && (
+        <div className={`mb-6 rounded-lg border p-4 ${
+          statusMessage.type === "success" 
+            ? "border-green-500/50 bg-green-500/10 text-green-400" 
+            : "border-red-500/50 bg-red-500/10 text-red-400"
+        }`}>
+          <div className="flex items-center gap-2">
+            {statusMessage.type === "success" ? (
+              <CheckCircle className="h-5 w-5" />
+            ) : (
+              <AlertCircle className="h-5 w-5" />
+            )}
+            <p>{statusMessage.message}</p>
+          </div>
+        </div>
+      )}
 
       <div className="space-y-6 max-w-4xl">
         <Card className="border-border/70 bg-card/60">
@@ -85,21 +194,55 @@ export default function SettingsPage() {
             <CardDescription>Manage your connected payment accounts</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center justify-between rounded-lg border border-border/70 bg-muted/40 px-4 py-3">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-md bg-indigo-500/20 flex items-center justify-center">
-                  <CreditCard className="h-5 w-5 text-indigo-400" />
-                </div>
-                <div>
-                  <div className="font-medium">Stripe Account</div>
-                  <div className="text-sm text-muted-foreground">Connected</div>
-                </div>
+            {stripeStatus === "loading" ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="text-muted-foreground">Loading...</div>
               </div>
-              <Button variant="outline" size="sm">Manage</Button>
-            </div>
-            <Button variant="outline" className="w-full">
-              + Add Payment Method
-            </Button>
+            ) : stripeStatus === "connected" ? (
+              <div className="flex items-center justify-between rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-3">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-md bg-green-500/20 flex items-center justify-center">
+                    <CheckCircle className="h-5 w-5 text-green-400" />
+                  </div>
+                  <div>
+                    <div className="font-medium text-green-400">Stripe Account</div>
+                    <div className="text-sm text-green-300/70">Connected and ready</div>
+                  </div>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleStripeOnboarding}
+                  disabled={isOnboarding}
+                >
+                  Update
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-md bg-amber-500/20 flex items-center justify-center">
+                      <AlertCircle className="h-5 w-5 text-amber-400" />
+                    </div>
+                    <div>
+                      <div className="font-medium text-amber-400">Stripe Account</div>
+                      <div className="text-sm text-amber-300/70">Not connected</div>
+                    </div>
+                  </div>
+                </div>
+                <Button 
+                  onClick={handleStripeOnboarding}
+                  disabled={isOnboarding}
+                  className="w-full"
+                >
+                  {isOnboarding ? "Redirecting to Stripe..." : "Connect Stripe Account"}
+                </Button>
+                <p className="text-xs text-muted-foreground text-center">
+                  Connect your Stripe account to receive payouts and accept payments
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
