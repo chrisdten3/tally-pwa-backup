@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Users, UserPlus } from "lucide-react";
 import { useClub } from "@/contexts/ClubContext";
+import { MembersDataTable } from "@/components/MembersDataTable";
 
 type Member = {
   id: string;
@@ -21,12 +22,13 @@ export default function MembersPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const fetchMembers = () => {
     if (!activeClub?.id) return;
 
     const token = localStorage.getItem("token");
     if (!token) return;
 
+    setLoading(true);
     fetch(`/api/clubs/${activeClub.id}/members`, {
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -38,6 +40,10 @@ export default function MembersPage() {
       })
       .catch((err) => console.error("Failed to fetch members:", err))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchMembers();
   }, [activeClub?.id]);
 
   if (!activeClub) {
@@ -111,41 +117,42 @@ export default function MembersPage() {
         </Card>
       </div>
 
-      <Card className="mt-6 border-border/70 bg-card/60">
-        <CardHeader>
-          <CardTitle>Member List</CardTitle>
-          <CardDescription>All members in {activeClub.name}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <p className="text-muted-foreground">Loading members...</p>
-          ) : members.length === 0 ? (
-            <p className="text-muted-foreground">No members yet.</p>
-          ) : (
-            <div className="space-y-4">
-              {members.map((member) => (
-                <div key={member.id} className="flex items-center justify-between rounded-lg border border-border/70 bg-muted/40 px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-indigo-500/20 flex items-center justify-center">
-                      <span className="text-sm font-semibold">
-                        {member.name?.charAt(0)?.toUpperCase() || "U"}
-                      </span>
-                    </div>
-                    <div>
-                      <div className="font-medium">{member.name || "Unnamed"}</div>
-                      <div className="text-sm text-muted-foreground">{member.email}</div>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        Role: {member.role} • Paid: ${member.totalPaid.toFixed(2)}
-                      </div>
-                    </div>
-                  </div>
-                  <Button variant="outline" size="sm">View</Button>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <div className="mt-6">
+        <MembersDataTable
+          members={members.map(m => ({
+            ...m,
+            firstName: m.name?.split(' ')[0],
+            lastName: m.name?.split(' ').slice(1).join(' '),
+            phone: m.email, // You may want to fetch actual phone from API
+          }))}
+          clubId={activeClub.id}
+          onRefreshMembers={fetchMembers}
+          onAddMember={async (member) => {
+            const token = localStorage.getItem("token");
+            const response = await fetch(`/api/clubs/${activeClub.id}/members/add`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify(member),
+            });
+            if (response.ok) {
+              fetchMembers();
+            }
+          }}
+          onDeleteMember={async (memberId) => {
+            const token = localStorage.getItem("token");
+            const response = await fetch(`/api/clubs/${activeClub.id}/members?userId=${memberId}`, {
+              method: "DELETE",
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            if (response.ok) {
+              fetchMembers();
+            }
+          }}
+        />
+      </div>
     </div>
   );
 }

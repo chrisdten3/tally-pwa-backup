@@ -29,6 +29,7 @@ import {
   Eye,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { MemberImportDialog } from "@/components/MemberImportDialog";
 
 export type Member = {
   id: string;
@@ -53,7 +54,7 @@ type Props = {
   onAddMember?: (member: Omit<Member, "id">) => void;
   onDeleteMember?: (memberId: string) => void;
   onSendReminder?: (memberId: string) => void;
-  onImportCSV?: (file: File) => void;
+  onRefreshMembers?: () => void;
 };
 
 export function MembersDataTable({
@@ -62,10 +63,11 @@ export function MembersDataTable({
   onAddMember,
   onDeleteMember,
   onSendReminder,
-  onImportCSV,
+  onRefreshMembers,
 }: Props) {
   const [isExpanded, setIsExpanded] = React.useState(false);
   const [isAddMemberOpen, setIsAddMemberOpen] = React.useState(false);
+  const [isImportOpen, setIsImportOpen] = React.useState(false);
   const [newMember, setNewMember] = React.useState({
     firstName: "",
     lastName: "",
@@ -127,8 +129,9 @@ export function MembersDataTable({
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file && onImportCSV) {
-      onImportCSV(file);
+    if (file) {
+      // Open the import dialog instead
+      setIsImportOpen(true);
     }
   };
 
@@ -209,17 +212,10 @@ export function MembersDataTable({
                 </DialogDescription>
               </div>
               <div className="flex items-center gap-2">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".csv"
-                  className="hidden"
-                  onChange={handleFileUpload}
-                />
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={() => setIsImportOpen(true)}
                   className="gap-2"
                 >
                   <Upload className="h-3 w-3" />
@@ -402,6 +398,17 @@ export function MembersDataTable({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* CSV Import Dialog */}
+      <MemberImportDialog
+        open={isImportOpen}
+        onOpenChange={setIsImportOpen}
+        clubId={clubId}
+        onImportComplete={() => {
+          setIsImportOpen(false);
+          onRefreshMembers?.();
+        }}
+      />
     </>
   );
 }

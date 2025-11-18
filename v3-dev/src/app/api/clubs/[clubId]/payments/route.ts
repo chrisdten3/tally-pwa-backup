@@ -66,7 +66,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ clubId: 
 
     const formattedPayments = (payments || []).map((payment: any) => ({
       id: payment.id,
-      amount: payment.amount,
+      amount: payment.amount / 100,
       currency: payment.currency,
       provider: payment.payment_provider,
       status: payment.status,
@@ -84,7 +84,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ clubId: 
 
     const formattedLedgers = (ledgers || []).map((ledger: any) => ({
       id: ledger.id,
-      amount: Math.abs(ledger.amount),
+      amount: Math.abs(ledger.amount) / 100,
       type: ledger.type,
       paymentProvider: ledger.payment_provider,
       createdAt: ledger.created_at,
@@ -98,12 +98,12 @@ export async function GET(req: Request, { params }: { params: Promise<{ clubId: 
         id: ledger.club_events.id,
         title: ledger.club_events.title,
       } : null,
-      balanceBefore: ledger.balance_before,
-      balanceAfter: ledger.balance_after,
+      balanceBefore: ledger.balance_before / 100,
+      balanceAfter: ledger.balance_after / 100,
     }));
 
     // Calculate summary stats
-    const totalReceived = (ledgers || []).reduce((sum: number, l: any) => sum + Math.abs(l.amount), 0);
+    const totalReceived = (ledgers || []).reduce((sum: number, l: any) => sum + Math.abs(l.amount), 0) / 100;
     const thisMonth = new Date();
     thisMonth.setDate(1);
     thisMonth.setHours(0, 0, 0, 0);
@@ -111,7 +111,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ clubId: 
     const thisMonthPayments = (ledgers || []).filter((l: any) => 
       new Date(l.created_at) >= thisMonth
     );
-    const monthlyTotal = thisMonthPayments.reduce((sum: number, l: any) => sum + Math.abs(l.amount), 0);
+    const monthlyTotal = thisMonthPayments.reduce((sum: number, l: any) => sum + Math.abs(l.amount), 0) / 100;
 
     // Get pending payments (unpaid assignees)
     const { data: pendingAssignees } = await supabaseAdmin
@@ -124,7 +124,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ clubId: 
     const pendingTotal = (pendingAssignees || []).reduce(
       (sum: number, a: any) => sum + (a.assigned_amount || 0),
       0
-    );
+    ) / 100;
 
     return NextResponse.json({
       payments: formattedPayments,
