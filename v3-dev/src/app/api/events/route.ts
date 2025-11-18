@@ -130,9 +130,14 @@ export async function POST(req: Request) {
           .select("id, phone, name")
           .in("id", assigneeUserIds);
 
+        console.log("📱 [SMS] Assigned users:", JSON.stringify(assignedUsers, null, 2));
+
         if (assignedUsers && assignedUsers.length > 0) {
           // Filter users with valid phone numbers
           const usersWithPhones = assignedUsers.filter((user) => user.phone);
+
+          console.log("📱 [SMS] Users with phones:", usersWithPhones.length);
+          console.log("📱 [SMS] Phone numbers:", usersWithPhones.map(u => ({ name: u.name, phone: u.phone })));
 
           if (usersWithPhones.length > 0) {
             // Get club name for the message
@@ -143,10 +148,12 @@ export async function POST(req: Request) {
               .single();
 
             const clubName = clubData?.name || "Your Club";
+            console.log("📱 [SMS] Club name:", clubName);
 
             // Generate payment link
             const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
             const paymentLink = `${baseUrl}/events/${eventId}/pay`;
+            console.log("📱 [SMS] Payment link:", paymentLink);
 
             // Format message
             const message = formatEventNotification({
@@ -156,16 +163,26 @@ export async function POST(req: Request) {
               paymentLink,
             });
 
+            console.log("📱 [SMS] Formatted message:", message);
+
             // Send SMS to all assigned members
             const phoneNumbers = usersWithPhones.map((user) => user.phone as string);
+            console.log("📱 [SMS] About to send SMS to:", phoneNumbers);
+            
             const smsResult = await sendBulkSMS(phoneNumbers, message);
 
-            console.log(`SMS notifications sent: ${smsResult.sent} successful, ${smsResult.failed} failed`);
+            console.log("✅ [SMS] SMS notifications sent:", smsResult.sent, "successful,", smsResult.failed, "failed");
+            console.log("📱 [SMS] Detailed results:", JSON.stringify(smsResult.results, null, 2));
+          } else {
+            console.log("⚠️ [SMS] No users with valid phone numbers found");
           }
+        } else {
+          console.log("⚠️ [SMS] No assigned users found");
         }
       } catch (smsError) {
         // Log error but don't fail the event creation
-        console.error("Error sending SMS notifications:", smsError);
+        console.error("❌ [SMS] Error sending SMS notifications:", smsError);
+        console.error("❌ [SMS] Error details:", JSON.stringify(smsError, null, 2));
       }
     }
 
