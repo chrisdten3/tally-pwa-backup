@@ -31,16 +31,40 @@ export default function SignupPage() {
     if (v) return;
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/signup", {
+      // Call your API endpoint which bypasses email confirmation
+      const response = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ firstName: firstName, lastName: lastName, email, password }),
+        body: JSON.stringify({ 
+          firstName, 
+          lastName, 
+          email, 
+          password 
+        }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Signup failed");
-      localStorage.setItem("token", data.token);
-      try { localStorage.setItem("user", JSON.stringify(data.user)); } catch {}
-      window.location.href = "/profile";
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Signup failed");
+      }
+
+      // If warning exists but token is present, still proceed
+      if (data.warning && data.token) {
+        console.warn("Signup warning:", data.warning);
+      }
+
+      if (!data.token && !data.user) {
+        throw new Error("Signup incomplete - please try logging in");
+      }
+
+      // Store token in localStorage for your app
+      if (data.token) {
+        localStorage.setItem("token", data.token);
+      }
+
+      // Redirect to home
+      window.location.href = "/home";
     } catch (err: any) {
       setError(err.message || "Unknown error");
     } finally {

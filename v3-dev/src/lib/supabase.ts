@@ -20,7 +20,13 @@ if (!SUPABASE_ANON_KEY) {
 export const supabaseClient: SupabaseClient = createClient(
   SUPABASE_URL,
   SUPABASE_ANON_KEY ?? "",
-  { auth: { persistSession: false } }
+  { 
+    auth: { 
+      persistSession: true,
+      storageKey: 'tally-auth',
+      storage: typeof window !== 'undefined' ? window.localStorage : undefined
+    } 
+  }
 );
 
 // Admin / server client (uses service role key). Only use this on server-side code.
@@ -41,17 +47,23 @@ export const supabaseAdmin: SupabaseClient = supabaseAdminInstance as SupabaseCl
 
 // Helper to get user by access token (server-side). Returns Supabase user object or null.
 export async function getUserByAccessToken(token?: string) {
-  if (!token || !supabaseAdminInstance) return null;
+  if (!token || !supabaseAdminInstance) {
+    return null;
+  }
   try {
     // supabase-js exposes auth.getUser which can verify JWT access tokens server-side
     // using the admin client.
-    // @ts-ignore - getUser is available on auth in v2+
     const resp = await supabaseAdminInstance.auth.getUser(token);
+    
     // resp.data.user may be undefined if token is invalid
-    // @ts-ignore
+    if (resp?.error) {
+      console.error("[getUserByAccessToken] Error:", resp.error);
+      return null;
+    }
+    
     return resp?.data?.user ?? null;
   } catch (err) {
-    console.error("Error verifying Supabase token", err);
+    console.error("[getUserByAccessToken] Exception:", err);
     return null;
   }
 }

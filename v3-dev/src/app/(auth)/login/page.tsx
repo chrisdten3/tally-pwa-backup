@@ -24,17 +24,28 @@ export default function LoginPage() {
     if (v) return;
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/login", {
+      // Call your API endpoint which handles token storage correctly
+      const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Login failed");
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Login failed");
+      }
+
+      if (!data.token) {
+        throw new Error("No token returned");
+      }
+
+      // Store token in localStorage for your app
       localStorage.setItem("token", data.token);
-      try { localStorage.setItem("user", JSON.stringify(data.user)); } catch {}
-      // redirect to profile page
-      window.location.href = "/profile";
+
+      // Redirect to home
+      window.location.href = "/home";
     } catch (err: any) {
       setError(err.message || "Unknown error");
     } finally {
