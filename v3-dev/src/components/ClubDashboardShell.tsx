@@ -12,6 +12,7 @@ import {
   CreditCard,
   LayoutDashboard,
   Settings,
+  LogOut,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -109,7 +110,7 @@ export default function ClubDashboardShell({
   return (
     <div className="flex min-h-screen bg-background text-foreground">
       {/* SIDEBAR */}
-      <aside className="hidden w-60 border-r bg-background/60 px-4 py-4 lg:flex lg:flex-col">
+      <aside className="hidden w-60 border-r bg-background/60 px-4 py-4 pb-8 lg:flex lg:flex-col lg:fixed lg:h-screen lg:overflow-y-auto">
         <div className="mb-8 flex items-center gap-2 px-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500 text-sm font-semibold text-white">
             T
@@ -117,36 +118,40 @@ export default function ClubDashboardShell({
           <span className="text-base font-semibold tracking-tight">Tally</span>
         </div>
 
-        <nav className="space-y-1 text-sm">
-          <SidebarLink icon={LayoutDashboard} label="Overview" href="/home" />
-          <SidebarLink icon={CalendarDays} label="Events" href="/events" />
-          <SidebarLink icon={Users} label="Members" href="/members" />
-          <SidebarLink
-            icon={CreditCard}
-            label="Payments"
-            href="/payments"
-          />
-          <SidebarLink icon={DollarSign} label="Payouts" href="/payouts" />
-          <Separator className="my-4" />
-          <SidebarLink icon={Settings} label="Settings" href="/settings" />
-        </nav>
+        <nav className="flex flex-1 flex-col text-sm">
+          <div className="space-y-1">
+            <SidebarLink icon={LayoutDashboard} label="Overview" href="/home" />
+            <SidebarLink icon={CalendarDays} label="Events" href="/events" />
+            <SidebarLink icon={Users} label="Members" href="/members" />
+            <SidebarLink
+              icon={CreditCard}
+              label="Payments"
+              href="/payments"
+            />
+            <SidebarLink icon={DollarSign} label="Payouts" href="/payouts" />
+          </div>
 
-        <div className="mt-auto pt-6">
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full justify-between gap-2"
-          >
-            <span className="text-xs text-muted-foreground">
-              Need help? View docs
-            </span>
-            <ArrowRight className="h-3 w-3" />
-          </Button>
-        </div>
+          {/* Push settings and sign-out to bottom */}
+          <div className="mt-auto mb-2 space-y-1 border-t border-border/50 pt-4">
+            <SidebarLink icon={Settings} label="Settings" href="/settings" />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                localStorage.removeItem("token");
+                window.location.href = "/login";
+              }}
+              className="w-full justify-start gap-2 px-2 text-sm font-normal text-muted-foreground hover:bg-muted hover:text-foreground"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>Sign out</span>
+            </Button>
+          </div>
+        </nav>
       </aside>
 
       {/* MAIN */}
-      <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
+      <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:ml-60">
         {/* Top bar */}
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
@@ -295,7 +300,7 @@ function ClubDashboard({
         <Card className="border-border/70 bg-card/60">
           <CardHeader className="pb-2">
             <CardTitle className="text-xs font-medium text-muted-foreground">
-              Upcoming dues
+              Pending events
             </CardTitle>
           </CardHeader>
           <CardContent className="flex items-end justify-between">
