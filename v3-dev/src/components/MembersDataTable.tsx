@@ -320,17 +320,19 @@ export function MembersDataTable({
                             >
                               <Eye className="h-3 w-3" />
                             </Button>
-                            {member.eventsOutstanding && member.eventsOutstanding > 0 && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                onClick={() => onSendReminder?.(member.id)}
-                                title="Send payment reminder"
-                              >
-                                <Bell className="h-3 w-3" />
-                              </Button>
-                            )}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => onSendReminder?.(member.id)}
+                              title="Send payment reminder"
+                              disabled={!member.eventsOutstanding || member.eventsOutstanding === 0}
+                              style={{ 
+                                visibility: (!member.eventsOutstanding || member.eventsOutstanding === 0) ? 'hidden' : 'visible' 
+                              }}
+                            >
+                              <Bell className="h-3 w-3" />
+                            </Button>
                             <Button
                               variant="ghost"
                               size="icon"
