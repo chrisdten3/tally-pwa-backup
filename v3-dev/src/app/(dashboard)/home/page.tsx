@@ -198,8 +198,7 @@ export default function HomePage() {
       .join("") || "U";
 
   return (
-    <main className="min-h-screen w-full bg-[#0B0B0E] text-zinc-100">
-      <div className={`${hasClubs && !needsStripeOnboarding ? 'w-full' : 'mx-auto max-w-7xl px-4 sm:px-6'} py-6 md:py-8`}>
+    <div className={`${hasClubs && !needsStripeOnboarding ? 'w-full' : 'mx-auto max-w-7xl px-4 sm:px-6'} py-6 md:py-8`}>
 
         {/* Setup flow - show only if incomplete */}
         {(!hasClubs || needsStripeOnboarding) && (
@@ -350,6 +349,5 @@ export default function HomePage() {
           </div>
         )}
       </div>
-    </main>
   );
 }

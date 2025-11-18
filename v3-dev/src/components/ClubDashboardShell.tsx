@@ -10,9 +10,6 @@ import {
   ArrowRight,
   PlusCircle,
   CreditCard,
-  LayoutDashboard,
-  Settings,
-  LogOut,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -108,50 +105,7 @@ export default function ClubDashboardShell({
   const clubMembers = activeClub ? members[activeClub.id] || [] : [];
 
   return (
-    <div className="flex min-h-screen bg-background text-foreground">
-      {/* SIDEBAR */}
-      <aside className="hidden w-60 border-r bg-background/60 px-4 py-4 pb-8 lg:flex lg:flex-col lg:fixed lg:h-screen lg:overflow-y-auto">
-        <div className="mb-8 flex items-center gap-2 px-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500 text-sm font-semibold text-white">
-            T
-          </div>
-          <span className="text-base font-semibold tracking-tight">Tally</span>
-        </div>
-
-        <nav className="flex flex-1 flex-col text-sm">
-          <div className="space-y-1">
-            <SidebarLink icon={LayoutDashboard} label="Overview" href="/home" />
-            <SidebarLink icon={CalendarDays} label="Events" href="/events" />
-            <SidebarLink icon={Users} label="Members" href="/members" />
-            <SidebarLink
-              icon={CreditCard}
-              label="Payments"
-              href="/payments"
-            />
-            <SidebarLink icon={DollarSign} label="Payouts" href="/payouts" />
-          </div>
-
-          {/* Push settings and sign-out to bottom */}
-          <div className="mt-auto mb-2 space-y-1 border-t border-border/50 pt-4">
-            <SidebarLink icon={Settings} label="Settings" href="/settings" />
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                localStorage.removeItem("token");
-                window.location.href = "/login";
-              }}
-              className="w-full justify-start gap-2 px-2 text-sm font-normal text-muted-foreground hover:bg-muted hover:text-foreground"
-            >
-              <LogOut className="h-4 w-4" />
-              <span>Sign out</span>
-            </Button>
-          </div>
-        </nav>
-      </aside>
-
-      {/* MAIN */}
-      <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:ml-60">
+    <div className="px-4 py-6 sm:px-6 lg:px-8">
         {/* Top bar */}
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
@@ -221,36 +175,11 @@ export default function ClubDashboardShell({
         ) : (
           <EmptyState />
         )}
-      </main>
-    </div>
+      </div>
   );
 }
 
 /* --- Sub-components --- */
-
-function SidebarLink({
-  icon: Icon,
-  label,
-  href,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  href: string;
-}) {
-  return (
-    <Button
-      asChild
-      variant="ghost"
-      size="sm"
-      className="w-full justify-start gap-2 px-2 text-sm font-normal text-muted-foreground hover:bg-muted hover:text-foreground"
-    >
-      <Link href={href}>
-        <Icon className="h-4 w-4" />
-        <span>{label}</span>
-      </Link>
-    </Button>
-  );
-}
 
 function ClubDashboard({
   club,
