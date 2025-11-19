@@ -3,19 +3,61 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Settings, User, Bell, CreditCard, Shield, CheckCircle, AlertCircle } from "lucide-react";
-import { useState, useEffect } from "react";
+import { User, Bell, CreditCard, Shield, CheckCircle, AlertCircle, Trash2 } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 export default function SettingsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  
+  // User profile state
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+  
+  // Stripe state
   const [stripeStatus, setStripeStatus] = useState<"connected" | "not_connected" | "loading">("loading");
   const [isOnboarding, setIsOnboarding] = useState(false);
+  const [isDisconnecting, setIsDisconnecting] = useState(false);
+  
+  // Status messages
   const [statusMessage, setStatusMessage] = useState<{ type: "success" | "error" | null; message: string }>({ 
     type: null, 
     message: "" 
   });
+
+  const checkStripeStatus = useCallback(async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setStripeStatus("not_connected");
+        return;
+      }
+
+      const res = await fetch("/api/auth/user", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const user = data.user;
+        
+        // Update form fields with user data
+        setName(user?.name || "");
+        setEmail(user?.email || "");
+        setPhone(user?.phone || "");
+        
+        setStripeStatus(user?.stripe_account_id ? "connected" : "not_connected");
+      } else {
+        setStripeStatus("not_connected");
+      }
+    } catch (error) {
+      console.error("Failed to check status:", error);
+      setStripeStatus("not_connected");
+    }
+  }, []);
 
   useEffect(() => {
     // Check URL params for Stripe status
@@ -32,31 +74,59 @@ export default function SettingsPage() {
       router.replace("/settings");
     }
 
-    // Check current Stripe status
+    // Check current Stripe status and load user data
     checkStripeStatus();
-  }, [searchParams]);
+  }, [searchParams, router, checkStripeStatus]);
 
-  const checkStripeStatus = async () => {
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsUpdatingProfile(true);
+    setStatusMessage({ type: null, message: "" });
+
     try {
       const token = localStorage.getItem("token");
       if (!token) {
-        setStripeStatus("not_connected");
+        setStatusMessage({ type: "error", message: "Please log in to update your profile." });
+        setIsUpdatingProfile(false);
         return;
       }
 
-      const res = await fetch("/api/auth/user", {
-        headers: { Authorization: `Bearer ${token}` }
+      const res = await fetch("/api/auth/update-profile", {
+        method: "PATCH",
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ name, email, phone })
       });
 
+      const data = await res.json();
+
       if (res.ok) {
-        const data = await res.json();
-        setStripeStatus(data.user?.stripe_account_id ? "connected" : "not_connected");
+        setStatusMessage({ 
+          type: "success", 
+          message: "Profile updated successfully!" 
+        });
+        // Update local storage if needed
+        const userData = localStorage.getItem("user");
+        if (userData) {
+          const user = JSON.parse(userData);
+          localStorage.setItem("user", JSON.stringify({ ...user, name, email, phone }));
+        }
       } else {
-        setStripeStatus("not_connected");
+        setStatusMessage({ 
+          type: "error", 
+          message: data.error || "Failed to update profile" 
+        });
       }
     } catch (error) {
-      console.error("Failed to check Stripe status:", error);
-      setStripeStatus("not_connected");
+      console.error("Profile update error:", error);
+      setStatusMessage({ 
+        type: "error", 
+        message: "An error occurred. Please try again." 
+      });
+    } finally {
+      setIsUpdatingProfile(false);
     }
   };
 
@@ -98,6 +168,52 @@ export default function SettingsPage() {
       setIsOnboarding(false);
     }
   };
+
+  const handleDisconnectStripe = async () => {
+    if (!confirm("Are you sure you want to disconnect your Stripe account? This will prevent you from receiving payouts.")) {
+      return;
+    }
+
+    setIsDisconnecting(true);
+    setStatusMessage({ type: null, message: "" });
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setStatusMessage({ type: "error", message: "Please log in." });
+        setIsDisconnecting(false);
+        return;
+      }
+
+      const res = await fetch("/api/stripe/connect/disconnect", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setStatusMessage({ 
+          type: "success", 
+          message: "Stripe account disconnected successfully" 
+        });
+        setStripeStatus("not_connected");
+      } else {
+        setStatusMessage({ 
+          type: "error", 
+          message: data.error || "Failed to disconnect Stripe account" 
+        });
+      }
+    } catch (error) {
+      console.error("Disconnect error:", error);
+      setStatusMessage({ 
+        type: "error", 
+        message: "An error occurred. Please try again." 
+      });
+    } finally {
+      setIsDisconnecting(false);
+    }
+  };
   return (
     <div className="px-4 py-6 sm:px-6 lg:px-8">
       <div className="mb-6">
@@ -135,55 +251,46 @@ export default function SettingsPage() {
             </CardTitle>
             <CardDescription>Update your account profile information</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <label className="text-sm font-medium">Full Name</label>
-              <Input className="mt-1" placeholder="John Doe" />
-            </div>
-            <div>
-              <label className="text-sm font-medium">Email</label>
-              <Input className="mt-1" type="email" placeholder="john@example.com" />
-            </div>
-            <div>
-              <label className="text-sm font-medium">Phone Number</label>
-              <Input className="mt-1" type="tel" placeholder="+1 (555) 000-0000" />
-            </div>
-            <Button>Save Changes</Button>
+          <CardContent>
+            <form onSubmit={handleUpdateProfile} className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Full Name</label>
+                <Input 
+                  className="mt-1" 
+                  placeholder="John Doe" 
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Email</label>
+                <Input 
+                  className="mt-1" 
+                  type="email" 
+                  placeholder="john@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Phone Number</label>
+                <Input 
+                  className="mt-1" 
+                  type="tel" 
+                  placeholder="+1 (555) 000-0000"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                />
+              </div>
+              <Button type="submit" disabled={isUpdatingProfile}>
+                {isUpdatingProfile ? "Saving..." : "Save Changes"}
+              </Button>
+            </form>
           </CardContent>
         </Card>
 
-        <Card className="border-border/70 bg-card/60">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Bell className="h-5 w-5" />
-              Notifications
-            </CardTitle>
-            <CardDescription>Manage your notification preferences</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">Email Notifications</div>
-                <div className="text-sm text-muted-foreground">Receive email updates about payments</div>
-              </div>
-              <Button variant="outline" size="sm">Enable</Button>
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">Payment Reminders</div>
-                <div className="text-sm text-muted-foreground">Get reminded about upcoming payments</div>
-              </div>
-              <Button variant="outline" size="sm">Enable</Button>
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">Event Notifications</div>
-                <div className="text-sm text-muted-foreground">Stay updated on new events</div>
-              </div>
-              <Button variant="outline" size="sm">Disable</Button>
-            </div>
-          </CardContent>
-        </Card>
 
         <Card className="border-border/70 bg-card/60">
           <CardHeader>
@@ -199,24 +306,47 @@ export default function SettingsPage() {
                 <div className="text-muted-foreground">Loading...</div>
               </div>
             ) : stripeStatus === "connected" ? (
-              <div className="flex items-center justify-between rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-3">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-md bg-green-500/20 flex items-center justify-center">
-                    <CheckCircle className="h-5 w-5 text-green-400" />
+              <div className="space-y-3">
+                <div className="flex items-center justify-between rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-md bg-green-500/20 flex items-center justify-center">
+                      <CheckCircle className="h-5 w-5 text-green-400" />
+                    </div>
+                    <div>
+                      <div className="font-medium text-green-400">Stripe Account</div>
+                      <div className="text-sm text-green-300/70">Connected and ready</div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="font-medium text-green-400">Stripe Account</div>
-                    <div className="text-sm text-green-300/70">Connected and ready</div>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={handleStripeOnboarding}
+                      disabled={isOnboarding}
+                    >
+                      Update
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={handleDisconnectStripe}
+                      disabled={isDisconnecting}
+                      className="text-red-400 hover:text-red-300 border-red-500/30 hover:border-red-500/50"
+                    >
+                      {isDisconnecting ? (
+                        "Disconnecting..."
+                      ) : (
+                        <>
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Disconnect
+                        </>
+                      )}
+                    </Button>
                   </div>
                 </div>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={handleStripeOnboarding}
-                  disabled={isOnboarding}
-                >
-                  Update
-                </Button>
+                <p className="text-xs text-muted-foreground">
+                  Disconnecting will prevent you from receiving payouts until you reconnect
+                </p>
               </div>
             ) : (
               <div className="space-y-4">

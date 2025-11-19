@@ -228,8 +228,8 @@ function SignupModal({
               transition={{ duration: 0.25 }}
               className="text-center"
             >
-              <h4 className="text-2xl font-semibold">You're in, {firstName} 🎉</h4>
-              <p className="mt-2 text-sm text-cool-gray">Thanks for joining the list — we'll send invites and product updates soon.</p>
+              <h4 className="text-2xl font-semibold">You&apos;re in, {firstName} 🎉</h4>
+              <p className="mt-2 text-sm text-cool-gray">Thanks for joining the list — we&apos;ll send invites and product updates soon.</p>
             </motion.div>
 
             {/* simple confetti pieces */}
@@ -638,17 +638,18 @@ export default function TallyLandingPage() {
           <div className="mt-8 divide-y divide-border rounded-2xl border border-border bg-prussian-blue/40">
             {[
               {
-                q: "Do you support multiple clubs per user?",
-                a: "Absolutely. Tally was designed for leaders in multiple orgs with different roles in each.",
+                q: "Can I manage more than one club with the same account?",
+                a: "Yes. Tally is built for students and leaders who juggle multiple organizations, each with their own roles and permissions.",
               },
               {
-                q: "How easy is setup?",
-                a: "A club's balance can be live in seconds.",
+                q: "How fast can we get up and running?",
+                a: "Setup takes seconds. Create your club, invite your team, and start collecting payments immediately.",
               },
               {
-                q: "Is Tally secure?",
-                a: "Yes - all transcation are powered by Paypal. No financial data is stored on our servers.",
+                q: "How secure are payments on Tally?",
+                a: "Very. All transactions are processed through Stripe, and Tally never stores sensitive financial information.",
               },
+
             ].map((item) => (
               <details key={item.q} className="group p-6">
                 <summary className="flex cursor-pointer list-none items-center justify-between text-base font-medium">

@@ -18,7 +18,7 @@ export async function GET(req: Request) {
     // Fetch user data from database
     const { data: user, error } = await supabaseAdmin
       .from("users")
-      .select("id, email, name, stripe_account_id, created_at")
+      .select("id, email, name, phone, stripe_account_id, created_at")
       .eq("id", authUser.id)
       .single();
 
