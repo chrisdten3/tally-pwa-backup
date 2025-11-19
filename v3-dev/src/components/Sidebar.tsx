@@ -55,11 +55,12 @@ export default function Sidebar() {
 
   return (
     <aside className="hidden w-60 border-r border-border bg-prussian-blue/40 px-4 py-4 pb-8 lg:flex lg:flex-col lg:fixed lg:h-screen lg:overflow-y-auto">
-      <div className="mb-8 flex items-center gap-2 px-2">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-bright-indigo text-sm font-semibold text-white">
-          T
-        </div>
-        <span className="text-base font-semibold tracking-tight text-soft-white">Tally</span>
+      <div className="flex items-center gap-2 px-2">
+        <img 
+          src="/tally-logo-transparent.png" 
+          alt="Tally Logo" 
+          className="h-30 w-30"
+        />
       </div>
 
       {/* Club Switcher */}
