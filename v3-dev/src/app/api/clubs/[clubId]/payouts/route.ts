@@ -66,7 +66,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ clubId: 
 
     const formattedPayouts = (payouts || []).map((payout: any) => ({
       id: payout.id,
-      amount: payout.amount,
+      amount: payout.amount / 100, // Convert cents to dollars
       currency: payout.currency,
       receiver: payout.receiver,
       receiverType: payout.receiver_type,
@@ -83,7 +83,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ clubId: 
 
     const formattedLedgers = (ledgers || []).map((ledger: any) => ({
       id: ledger.id,
-      amount: Math.abs(ledger.amount),
+      amount: Math.abs(ledger.amount) / 100, // Convert cents to dollars
       type: ledger.type,
       paymentProvider: ledger.payment_provider,
       createdAt: ledger.created_at,
@@ -93,20 +93,20 @@ export async function GET(req: Request, { params }: { params: Promise<{ clubId: 
         name: ledger.users?.name || ledger.completed_by_name,
         email: ledger.users?.email || ledger.completed_by_email,
       },
-      balanceBefore: ledger.balance_before,
-      balanceAfter: ledger.balance_after,
+      balanceBefore: ledger.balance_before / 100, // Convert cents to dollars
+      balanceAfter: ledger.balance_after / 100, // Convert cents to dollars
     }));
 
-    // Calculate summary stats
-    const totalPaidOut = (ledgers || []).reduce((sum: number, l: any) => sum + Math.abs(l.amount), 0);
+    // Calculate summary stats (convert cents to dollars)
+    const totalPaidOut = (ledgers || []).reduce((sum: number, l: any) => sum + Math.abs(l.amount), 0) / 100;
     const pendingPayouts = (payouts || []).filter((p: any) => p.status === "pending");
-    const pendingTotal = pendingPayouts.reduce((sum: number, p: any) => sum + (p.amount || 0), 0);
+    const pendingTotal = pendingPayouts.reduce((sum: number, p: any) => sum + (p.amount || 0), 0) / 100;
 
     return NextResponse.json({
       payouts: formattedPayouts,
       ledgers: formattedLedgers,
       stats: {
-        availableBalance: club?.balance || 0,
+        availableBalance: (club?.balance || 0) / 100, // Convert cents to dollars
         totalPaidOut,
         pendingTotal,
         totalCount: payouts?.length || 0,
