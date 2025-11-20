@@ -151,15 +151,6 @@ export default function ClubDashboardShell({ userName }: Props) {
               Welcome back, {userName}
             </h1>
           </div>
-          <Button
-            variant="outline"
-            size="icon"
-            className="relative border-border/60"
-          >
-            <Bell className="h-4 w-4" />
-            {/* unread dot */}
-            <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-emerald-500" />
-          </Button>
         </div>
 
         {/* Action buttons row */}
@@ -294,7 +285,7 @@ function ClubDashboard({
                 variant="outline"
                 className="justify-start gap-2"
               >
-                <Link href="/reminders">
+                <Link href="/events">
                   <Bell className="h-4 w-4" />
                   Send reminders
                 </Link>

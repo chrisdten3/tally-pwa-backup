@@ -18,9 +18,11 @@ import {
   CheckCircle, 
   Clock, 
   User,
-  Share2
+  Share2,
+  Bell
 } from "lucide-react";
 import { EventShareLink } from "./EventShareLink";
+import { SendRemindersModal } from "./SendRemindersModal";
 
 type EventDetailsModalProps = {
   event: {
@@ -47,6 +49,8 @@ type EventDetailsModalProps = {
 };
 
 export function EventDetailsModal({ event, open, onOpenChange }: EventDetailsModalProps) {
+  const [showRemindersModal, setShowRemindersModal] = useState(false);
+
   const paymentPercentage = event.stats.totalAssignees > 0
     ? Math.round((event.stats.paidCount / event.stats.totalAssignees) * 100)
     : 0;
@@ -195,13 +199,26 @@ export function EventDetailsModal({ event, open, onOpenChange }: EventDetailsMod
               Close
             </Button>
             {event.stats.pendingCount > 0 && (
-              <Button className="flex-1">
+              <Button 
+                className="flex-1"
+                onClick={() => setShowRemindersModal(true)}
+              >
+                <Bell className="mr-2 h-4 w-4" />
                 Send Reminders ({event.stats.pendingCount})
               </Button>
             )}
           </div>
         </div>
       </DialogContent>
+
+      {/* Send Reminders Modal */}
+      <SendRemindersModal
+        eventId={event.id}
+        eventTitle={event.title}
+        pendingCount={event.stats.pendingCount}
+        open={showRemindersModal}
+        onOpenChange={setShowRemindersModal}
+      />
     </Dialog>
   );
 }
