@@ -15,6 +15,9 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "Tally - Club Finances",
   description: "Manage your club's finances with ease",
+  icons: {
+    icon: "/tally-icon.ico",
+  },
 };
 
 export default function RootLayout({
