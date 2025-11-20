@@ -105,6 +105,25 @@
   }
 }
 
+/* Horizontal scrolling animation for club carousel */
+@keyframes scroll-infinite {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-25%);
+  }
+}
+
+.animate-scroll-infinite {
+  animation: scroll-infinite 30s linear infinite;
+  will-change: transform;
+}
+
+.animate-scroll-infinite:hover {
+  animation-play-state: paused;
+}
+
 :root {
   --radius: 0.625rem;
   

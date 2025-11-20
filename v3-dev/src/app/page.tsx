@@ -31,7 +31,7 @@ const features = [
   {
     icon: <BellRing className="h-6 w-6" aria-hidden />,
     title: "Auto‑notifications",
-    desc: "Smart reminders via email or text that follow up so you don’t have to.",
+    desc: "Smart reminders via text that follow up so you don’t have to.",
   },
   {
     icon: <Users className="h-6 w-6" aria-hidden />,
@@ -565,17 +565,29 @@ export default function TallyLandingPage() {
     Trusted by clubs, teams, and student orgs
   </p>
 
-  <div className="mx-auto mt-10 flex max-w-6xl flex-wrap items-center justify-center gap-x-16 gap-y-10 opacity-90">
-    {["georgetownventures", "hoyalytics", "hoyadev"].map((name) => (
-      <Image
-        key={name}
-        src={`/club_logos/${name}.png`}
-        alt={`${name} club logo`}
-        width={100}
-        height={56}
-        className="h-14 w-auto object-contain transition-transform duration-300 hover:scale-105"
-      />
-    ))}
+  <div className="relative mt-10 overflow-hidden">
+    <div 
+      className="flex gap-6"
+      style={{
+        animation: 'scroll-infinite 30s linear infinite',
+        willChange: 'transform'
+      }}
+    >
+      {[...Array(4)].map((_, setIndex) => (
+        <React.Fragment key={setIndex}>
+          {["Georgetown Ventures", "Hoyalytics", "Hoya Developers", "MSB Tech Center"].map((name) => (
+            <div
+              key={`${setIndex}-${name}`}
+              className="group flex h-32 w-64 shrink-0 items-center justify-center rounded-2xl border border-border bg-prussian-blue/40 p-6 transition hover:bg-prussian-blue/60"
+            >
+              <span className="text-lg font-semibold text-soft-white transition-transform duration-300 group-hover:scale-105">
+                {name}
+              </span>
+            </div>
+          ))}
+        </React.Fragment>
+      ))}
+    </div>
   </div>
 </Section>
 
@@ -606,18 +618,18 @@ export default function TallyLandingPage() {
             <ul className="mt-6 space-y-4 text-cool-gray">
               <li className="flex gap-3"><span className="mt-0.5">1.</span> Create your club.</li>
               <li className="flex gap-3"><span className="mt-0.5">2.</span> Set an event, and select who is responsible</li>
-              <li className="flex gap-3"><span className="mt-0.5">3.</span> Members choose card, wallet, or bank.*</li>
-              <li className="flex gap-3"><span className="mt-0.5">4.</span> Tally auto‑reconciles payments, attendance, and reminders.</li>
+              <li className="flex gap-3"><span className="mt-0.5">3.</span> Members can pay via multiple payment methods*</li>
+              <li className="flex gap-3"><span className="mt-0.5">4.</span> Tally auto‑reconciles payments,reminders, and payouts.</li>
             </ul>
-            <p className="mt-2 text-xs text-muted-foreground">* Payment methods facilitated via Paypal Inc.</p>
+            <p className="mt-2 text-xs text-muted-foreground">* Payment methods facilitated via Stripe.</p>
           </div>
           <div className="relative rounded-3xl border border-border bg-prussian-blue p-4">
             <div className="grid gap-4 sm:grid-cols-2">
               {[
-                { h: "Import members", p: "Map columns and validate emails automatically." },
-                { h: "Smart reminders", p: "Gentle nudges that actually get paid." },
-                { h: "Attendance sync", p: "Tie activity to eligibility and perks." },
                 { h: "One source of truth", p: "Finance, roster, and CRM all aligned." },
+                { h: "Smart reminders", p: "Gentle nudges that actually get paid." },
+                { h: "Attendance sync", p: "Keep track of members who are engaged and participating." },
+                { h: "Import members", p: "Add members via CSV upload or manual entry." },
               ].map((x) => (
                 <div key={x.h} className="rounded-xl border border-border bg-onyx p-4">
                   <h4 className="text-sm font-medium">{x.h}</h4>
@@ -638,16 +650,20 @@ export default function TallyLandingPage() {
           <div className="mt-8 divide-y divide-border rounded-2xl border border-border bg-prussian-blue/40">
             {[
               {
-                q: "Can I manage more than one club with the same account?",
-                a: "Yes. Tally is built for students and leaders who juggle multiple organizations, each with their own roles and permissions.",
-              },
-              {
                 q: "How fast can we get up and running?",
                 a: "Setup takes seconds. Create your club, invite your team, and start collecting payments immediately.",
               },
               {
+                q: "Can I manage more than one club with the same account?",
+                a: "Yes. Tally is built for students and leaders who juggle multiple organizations, each with their own roles and permissions.",
+              },
+              {
                 q: "How secure are payments on Tally?",
                 a: "Very. All transactions are processed through Stripe, and Tally never stores sensitive financial information.",
+              },
+              {
+                q: "Can I reach out for feature requests or support?",
+                a: "Absolutely! We love hearing from our users. You can contact us at tallyappv1@gmail.com.",
               },
 
             ].map((item) => (

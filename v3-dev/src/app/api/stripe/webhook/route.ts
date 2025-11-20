@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import stripeLib from "@/lib/stripe";
+import { sendSMS } from "@/lib/twilio";
 
 export async function POST(req: NextRequest) {
   try {
@@ -42,7 +43,7 @@ export async function POST(req: NextRequest) {
           const pending = pendingRows?.[0];
           console.log(`[Stripe Webhook] Found pending payment:`, pending ? `Yes (assignment_id: ${pending.assignment_id})` : "No");
           
-          let assignment: any = null;
+          let assignment: Record<string, unknown> | null = null;
 
           if (pending && pending.assignment_id) {
             const { data: aRows } = await supabaseAdmin
@@ -217,6 +218,144 @@ export async function POST(req: NextRequest) {
           console.log("[Stripe Webhook] No session ID found");
         }
       }
+
+      // Handle payout events (for instant payouts to connected accounts)
+      if (event.type === "payout.paid") {
+        console.log("[Stripe Webhook] Processing payout.paid event");
+        const payoutData = event.data?.object;
+        const payoutId = payoutData?.id;
+        const arrivalDate = payoutData?.arrival_date;
+
+        console.log(`[Stripe Webhook] Payout ID: ${payoutId}, Arrival Date: ${arrivalDate}`);
+
+        if (payoutId) {
+          // Find the payout in our database
+          const { data: payoutRows } = await supabaseAdmin
+            .from("payouts")
+            .select("*")
+            .eq("provider_batch_id", payoutId)
+            .limit(1);
+
+          const payout = payoutRows?.[0];
+
+          if (payout) {
+            console.log(`[Stripe Webhook] Found payout record: ${payout.id}`);
+
+            // Update payout status
+            await supabaseAdmin
+              .from("payouts")
+              .update({ status: "paid" })
+              .eq("id", payout.id);
+
+            // Get admin user info (who initiated the payout)
+            const { data: adminRows } = await supabaseAdmin
+              .from("users")
+              .select("id, email, name, phone")
+              .eq("id", payout.initiated_by)
+              .limit(1);
+
+            const adminUser = adminRows?.[0];
+
+            // Get recipient user info
+            const { data: recipientRows } = await supabaseAdmin
+              .from("users")
+              .select("id, email, name")
+              .eq("id", payout.recipient_user_id)
+              .limit(1);
+
+            const recipientUser = recipientRows?.[0];
+
+            // Get club info
+            const { data: clubRows } = await supabaseAdmin
+              .from("clubs")
+              .select("id, name")
+              .eq("id", payout.club_id)
+              .limit(1);
+
+            const club = clubRows?.[0];
+
+            if (adminUser && recipientUser && club) {
+              const amountInDollars = (payout.amount / 100).toFixed(2);
+              const notificationMessage = `✓ Payout settled: $${amountInDollars} deposited to ${recipientUser.name || recipientUser.email}'s bank. ID: ${payoutId}`;
+
+              // Send SMS notification if phone available
+              if (adminUser.phone) {
+                try {
+                  await sendSMS({
+                    to: adminUser.phone,
+                    message: notificationMessage,
+                  });
+                  console.log(`[Stripe Webhook] SMS notification sent to admin ${adminUser.id}`);
+                } catch (smsError) {
+                  console.error(`[Stripe Webhook] Failed to send SMS:`, smsError);
+                }
+              } else {
+                console.log(`[Stripe Webhook] No phone number for admin ${adminUser.id}, skipping SMS`);
+              }
+            } else {
+              console.log(`[Stripe Webhook] Missing user or club info for notifications`);
+            }
+          } else {
+            console.log(`[Stripe Webhook] No payout record found for Stripe payout ID: ${payoutId}`);
+          }
+        }
+      }
+
+      if (event.type === "payout.failed") {
+        console.log("[Stripe Webhook] Processing payout.failed event");
+        const payoutData = event.data?.object;
+        const payoutId = payoutData?.id;
+        const failureCode = payoutData?.failure_code;
+        const failureMessage = payoutData?.failure_message;
+
+        console.log(`[Stripe Webhook] Payout ID: ${payoutId}, Failure: ${failureCode} - ${failureMessage}`);
+
+        if (payoutId) {
+          // Update payout status in database
+          const { data: payoutRows } = await supabaseAdmin
+            .from("payouts")
+            .select("*")
+            .eq("provider_batch_id", payoutId)
+            .limit(1);
+
+          const payout = payoutRows?.[0];
+
+          if (payout) {
+            await supabaseAdmin
+              .from("payouts")
+              .update({ status: "failed" })
+              .eq("id", payout.id);
+
+            // Get admin user info
+            const { data: adminRows } = await supabaseAdmin
+              .from("users")
+              .select("id, email, phone")
+              .eq("id", payout.initiated_by)
+              .limit(1);
+
+            const adminUser = adminRows?.[0];
+
+            if (adminUser) {
+              const failureNotification = `⚠️ Payout failed (${payoutId}): ${failureMessage || failureCode || "Unknown error"}. Contact support.`;
+
+              // Send SMS alert if phone available
+              if (adminUser.phone) {
+                try {
+                  await sendSMS({
+                    to: adminUser.phone,
+                    message: failureNotification,
+                  });
+                  console.log(`[Stripe Webhook] Failure SMS sent to admin ${adminUser.id}`);
+                } catch (smsError) {
+                  console.error(`[Stripe Webhook] Failed to send failure SMS:`, smsError);
+                }
+              } else {
+                console.log(`[Stripe Webhook] No phone number for admin ${adminUser.id}, skipping failure SMS`);
+              }
+            }
+          }
+        }
+      }
     } catch (e) {
       console.error("[Stripe Webhook] Error processing stripe webhook event:", e);
       console.error("[Stripe Webhook] Error stack:", e instanceof Error ? e.stack : "No stack trace");
@@ -224,7 +363,8 @@ export async function POST(req: NextRequest) {
 
     console.log(`[Stripe Webhook] Successfully processed event ${event.type}`);
     return NextResponse.json({ received: true });
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message || "verify error" }, { status: 500 });
+  } catch (e: unknown) {
+    const error = e as Error;
+    return NextResponse.json({ error: error.message || "verify error" }, { status: 500 });
   }
 }

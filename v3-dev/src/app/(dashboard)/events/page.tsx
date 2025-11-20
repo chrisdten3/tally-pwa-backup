@@ -3,11 +3,12 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, Bell } from "lucide-react";
 import { useClub } from "@/contexts/ClubContext";
 import { CreateEventModal } from "@/components/CreateEventModal";
 import { EventShareLink } from "@/components/EventShareLink";
 import { EventDetailsModal } from "@/components/EventDetailsModal";
+import { SendRemindersModal } from "@/components/SendRemindersModal";
 
 type Event = {
   id: string;
@@ -34,8 +35,9 @@ export default function EventsPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [reminderEvent, setReminderEvent] = useState<Event | null>(null);
 
-  const fetchEvents = () => {
+  useEffect(() => {
     if (!activeClub?.id) return;
 
     const token = localStorage.getItem("token");
@@ -56,10 +58,6 @@ export default function EventsPage() {
       })
       .catch((err) => console.error("Failed to fetch events:", err))
       .finally(() => setLoading(false));
-  };
-
-  useEffect(() => {
-    fetchEvents();
   }, [activeClub?.id]);
 
   if (!activeClub) {
@@ -91,7 +89,20 @@ export default function EventsPage() {
           <h1 className="text-2xl font-semibold sm:text-3xl">
             Manage Events
           </h1>
-          <CreateEventModal onEventCreated={fetchEvents} />
+          <CreateEventModal onEventCreated={() => {
+            // Refetch events after creating a new one
+            if (!activeClub?.id) return;
+            const token = localStorage.getItem("token");
+            if (!token) return;
+            fetch(`/api/clubs/${activeClub.id}/events`, {
+              headers: { Authorization: `Bearer ${token}` },
+            })
+              .then((r) => r.json())
+              .then((data) => {
+                if (data.events) setEvents(data.events);
+              })
+              .catch((err) => console.error("Failed to fetch events:", err));
+          }} />
         </div>
       </div>
 
@@ -161,6 +172,19 @@ export default function EventsPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <EventShareLink eventId={event.id} eventTitle={event.title} />
+                    {event.stats.pendingCount > 0 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setReminderEvent(event);
+                        }}
+                      >
+                        <Bell className="mr-1 h-3.5 w-3.5" />
+                        Remind ({event.stats.pendingCount})
+                      </Button>
+                    )}
                     <Button 
                       variant="outline" 
                       size="sm"
@@ -182,6 +206,17 @@ export default function EventsPage() {
           event={selectedEvent}
           open={!!selectedEvent}
           onOpenChange={(open) => !open && setSelectedEvent(null)}
+        />
+      )}
+
+      {/* Send Reminders Modal */}
+      {reminderEvent && (
+        <SendRemindersModal
+          eventId={reminderEvent.id}
+          eventTitle={reminderEvent.title}
+          pendingCount={reminderEvent.stats.pendingCount}
+          open={!!reminderEvent}
+          onOpenChange={(open) => !open && setReminderEvent(null)}
         />
       )}
     </div>
