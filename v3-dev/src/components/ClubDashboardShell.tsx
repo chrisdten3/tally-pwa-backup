@@ -422,10 +422,6 @@ function ClubDashboard({
             console.log("Send reminder to:", memberId);
             // TODO: Implement API call to send reminder
           }}
-          onImportCSV={(file) => {
-            console.log("Import CSV:", file);
-            // TODO: Implement CSV import logic
-          }}
         />
       </div>
     </div>
