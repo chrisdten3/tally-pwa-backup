@@ -2,7 +2,6 @@
 
 import { X, CreditCard, DollarSign } from 'lucide-react';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -17,19 +16,30 @@ interface PaymentModalProps {
 
 export default function PaymentModal({ isOpen, onClose, event }: PaymentModalProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const _router = useRouter();
+  // router not required for Stripe redirect flow
 
   if (!isOpen) return null;
 
   const handlePayment = async (paymentMethod: 'card' | 'venmo') => {
     setIsLoading(true);
-    // Redirect to the appropriate payment method
-    if (paymentMethod === 'card') {
-      // Redirect to PayPal flow
-      window.location.href = `/api/checkout?eventId=${event.id}&type=paypal`;
-    } else {
-      // Redirect to Venmo flow
-      window.location.href = `/api/checkout?eventId=${event.id}&type=venmo`;
+    try {
+      const res = await fetch('/api/stripe/create-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eventId: event.id }),
+      });
+      const j = await res.json();
+      if (!res.ok) throw new Error(j?.error || 'create-session failed');
+      if (j.url) {
+        window.location.href = j.url;
+      } else {
+        throw new Error('No session URL returned from server');
+      }
+    } catch (e) {
+      console.error('Stripe session creation failed:', e);
+      alert((e as any)?.message || 'Payment initiation failed');
+    } finally {
+      setIsLoading(false);
     }
   };
 

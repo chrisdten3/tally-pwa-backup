@@ -24,9 +24,10 @@ export async function POST(req: NextRequest) {
       .eq("club_event_id", eventId)
       .eq("user_id", authUser.id)
       .eq("is_cancelled", false)
+      .is("paid_at", null)
       .limit(1);
     const assignment = assignmentRows?.[0];
-    if (!assignment) return NextResponse.json({ error: "Not assigned" }, { status: 403 });
+    if (!assignment) return NextResponse.json({ error: "Not assigned or already paid" }, { status: 403 });
 
     const value = Number(assignment.assigned_amount).toFixed(2);
 
