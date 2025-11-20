@@ -565,17 +565,29 @@ export default function TallyLandingPage() {
     Trusted by clubs, teams, and student orgs
   </p>
 
-  <div className="mx-auto mt-10 flex max-w-6xl flex-wrap items-center justify-center gap-x-16 gap-y-10 opacity-90">
-    {["georgetownventures", "hoyalytics", "hoyadev"].map((name) => (
-      <Image
-        key={name}
-        src={`/club_logos/${name}.png`}
-        alt={`${name} club logo`}
-        width={100}
-        height={56}
-        className="h-14 w-auto object-contain transition-transform duration-300 hover:scale-105"
-      />
-    ))}
+  <div className="relative mt-10 overflow-hidden">
+    <div 
+      className="flex gap-6"
+      style={{
+        animation: 'scroll-infinite 30s linear infinite',
+        willChange: 'transform'
+      }}
+    >
+      {[...Array(4)].map((_, setIndex) => (
+        <React.Fragment key={setIndex}>
+          {["Georgetown Ventures", "Hoyalytics", "Hoya Developers", "MSB Tech Center"].map((name) => (
+            <div
+              key={`${setIndex}-${name}`}
+              className="group flex h-32 w-64 shrink-0 items-center justify-center rounded-2xl border border-border bg-prussian-blue/40 p-6 transition hover:bg-prussian-blue/60"
+            >
+              <span className="text-lg font-semibold text-soft-white transition-transform duration-300 group-hover:scale-105">
+                {name}
+              </span>
+            </div>
+          ))}
+        </React.Fragment>
+      ))}
+    </div>
   </div>
 </Section>
 
