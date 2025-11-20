@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { DollarSign, Send, CheckCircle } from "lucide-react";
+import { DollarSign, Send, CheckCircle, AlertCircle } from "lucide-react";
 import { useClub } from "@/contexts/ClubContext";
+import { useRouter } from "next/navigation";
+import RequestPayoutModal from "@/components/RequestPayoutModal";
 
 type Payout = {
   id: string;
@@ -29,6 +31,7 @@ type Stats = {
 
 export default function PayoutsPage() {
   const { activeClub } = useClub();
+  const router = useRouter();
   const [payouts, setPayouts] = useState<Payout[]>([]);
   const [stats, setStats] = useState<Stats>({
     availableBalance: 0,
@@ -38,8 +41,45 @@ export default function PayoutsPage() {
     pendingCount: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [userHasPhone, setUserHasPhone] = useState(true);
+  const [showPayoutModal, setShowPayoutModal] = useState(false);
 
   useEffect(() => {
+    if (!activeClub?.id) return;
+
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    // Check if user has phone number
+    fetch('/api/auth/user', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.user) {
+          setUserHasPhone(!!data.user.phone);
+        }
+      })
+      .catch((err) => console.error("Failed to fetch user:", err));
+
+    // Fetch payouts
+    fetch(`/api/clubs/${activeClub.id}/payouts`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.payouts) {
+          setPayouts(data.payouts);
+        }
+        if (data.stats) {
+          setStats(data.stats);
+        }
+      })
+      .catch((err) => console.error("Failed to fetch payouts:", err))
+      .finally(() => setLoading(false));
+  }, [activeClub?.id]);
+
+  const refreshPayouts = () => {
     if (!activeClub?.id) return;
 
     const token = localStorage.getItem("token");
@@ -57,9 +97,8 @@ export default function PayoutsPage() {
           setStats(data.stats);
         }
       })
-      .catch((err) => console.error("Failed to fetch payouts:", err))
-      .finally(() => setLoading(false));
-  }, [activeClub?.id]);
+      .catch((err) => console.error("Failed to fetch payouts:", err));
+  };
 
   if (!activeClub) {
     return (
@@ -92,21 +131,69 @@ export default function PayoutsPage() {
           <h1 className="text-2xl font-semibold sm:text-3xl">
             Payout Management
           </h1>
-          <Button>
+          <Button onClick={() => setShowPayoutModal(true)}>
             <Send className="mr-2 h-4 w-4" />
             Request Payout
           </Button>
         </div>
       </div>
 
+      <RequestPayoutModal
+        isOpen={showPayoutModal}
+        onClose={() => setShowPayoutModal(false)}
+        clubId={activeClub.id}
+        clubName={activeClub.name}
+        availableBalance={stats.availableBalance}
+        onSuccess={refreshPayouts}
+      />
+
+      {!userHasPhone && (
+        <Card className="mb-6 border-amber-500/50 bg-amber-500/10">
+          <CardContent className="flex items-start gap-3 pt-6">
+            <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5 shrink-0" />
+            <div className="flex-1">
+              <h3 className="font-semibold text-amber-500 mb-1">Phone Number Required for Payout Notifications</h3>
+              <p className="text-sm text-muted-foreground mb-3">
+                Add your phone number to receive SMS notifications when payouts are initiated and settled.
+              </p>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => router.push('/settings')}
+                className="border-amber-500/50 hover:bg-amber-500/20"
+              >
+                Update Profile
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <Card className="mb-6 border-blue-500/50 bg-blue-500/10">
+        <CardContent className="pt-6">
+          <div className="flex items-start gap-3">
+            <DollarSign className="h-5 w-5 text-blue-400 mt-0.5 shrink-0" />
+            <div>
+              <h3 className="font-semibold text-blue-400 mb-1">Platform Fee: 5.5% + $0.30</h3>
+              <p className="text-sm text-muted-foreground">
+                A platform fee of <strong>5.5% + $0.30</strong> is deducted from each payout to cover payment processing costs.
+              </p>
+              <p className="text-xs text-muted-foreground mt-2">
+                Example: Request $100 → Platform fee $5.80 → You receive $94.20
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <Card className="border-border/70 bg-card/60">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <DollarSign className="h-5 w-5 text-emerald-400" />
-              Available Balance
+              Available to Withdraw
             </CardTitle>
-            <CardDescription>Ready to withdraw</CardDescription>
+            <CardDescription>Club balance after fees</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-semibold">${stats.availableBalance.toFixed(2)}</div>
@@ -130,9 +217,9 @@ export default function PayoutsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CheckCircle className="h-5 w-5 text-emerald-400" />
-              Total Paid Out
+              All-Time Payouts
             </CardTitle>
-            <CardDescription>All-time payout total</CardDescription>
+            <CardDescription>Total withdrawn to date</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-semibold">${stats.totalPaidOut.toFixed(2)}</div>
