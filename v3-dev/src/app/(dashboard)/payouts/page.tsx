@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { DollarSign, Send, CheckCircle, AlertCircle } from "lucide-react";
 import { useClub } from "@/contexts/ClubContext";
 import { useRouter } from "next/navigation";
-import RequestPayoutModal from "@/components/RequestPayoutModal";
 
 type Payout = {
   id: string;
@@ -42,7 +41,6 @@ export default function PayoutsPage() {
   });
   const [loading, setLoading] = useState(true);
   const [userHasPhone, setUserHasPhone] = useState(true);
-  const [showPayoutModal, setShowPayoutModal] = useState(false);
 
   useEffect(() => {
     if (!activeClub?.id) return;
@@ -79,27 +77,6 @@ export default function PayoutsPage() {
       .finally(() => setLoading(false));
   }, [activeClub?.id]);
 
-  const refreshPayouts = () => {
-    if (!activeClub?.id) return;
-
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
-    fetch(`/api/clubs/${activeClub.id}/payouts`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.payouts) {
-          setPayouts(data.payouts);
-        }
-        if (data.stats) {
-          setStats(data.stats);
-        }
-      })
-      .catch((err) => console.error("Failed to fetch payouts:", err));
-  };
-
   if (!activeClub) {
     return (
       <div className="px-4 py-6 sm:px-6 lg:px-8">
@@ -127,25 +104,12 @@ export default function PayoutsPage() {
         <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
           Transfers • {activeClub.name}
         </p>
-        <div className="mt-1 flex items-center justify-between">
+        <div className="mt-1">
           <h1 className="text-2xl font-semibold sm:text-3xl">
             Transfer History
           </h1>
-          <Button onClick={() => setShowPayoutModal(true)}>
-            <Send className="mr-2 h-4 w-4" />
-            Manual Payout
-          </Button>
         </div>
       </div>
-
-      <RequestPayoutModal
-        isOpen={showPayoutModal}
-        onClose={() => setShowPayoutModal(false)}
-        clubId={activeClub.id}
-        clubName={activeClub.name}
-        availableBalance={stats.availableBalance}
-        onSuccess={refreshPayouts}
-      />
 
       {!userHasPhone && (
         <Card className="mb-6 border-amber-500/50 bg-amber-500/10">
