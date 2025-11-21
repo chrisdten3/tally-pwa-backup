@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { DollarSign, Send, CheckCircle, AlertCircle } from "lucide-react";
 import { useClub } from "@/contexts/ClubContext";
 import { useRouter } from "next/navigation";
-import RequestPayoutModal from "@/components/RequestPayoutModal";
 
 type Payout = {
   id: string;
@@ -42,7 +41,6 @@ export default function PayoutsPage() {
   });
   const [loading, setLoading] = useState(true);
   const [userHasPhone, setUserHasPhone] = useState(true);
-  const [showPayoutModal, setShowPayoutModal] = useState(false);
 
   useEffect(() => {
     if (!activeClub?.id) return;
@@ -79,27 +77,6 @@ export default function PayoutsPage() {
       .finally(() => setLoading(false));
   }, [activeClub?.id]);
 
-  const refreshPayouts = () => {
-    if (!activeClub?.id) return;
-
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
-    fetch(`/api/clubs/${activeClub.id}/payouts`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.payouts) {
-          setPayouts(data.payouts);
-        }
-        if (data.stats) {
-          setStats(data.stats);
-        }
-      })
-      .catch((err) => console.error("Failed to fetch payouts:", err));
-  };
-
   if (!activeClub) {
     return (
       <div className="px-4 py-6 sm:px-6 lg:px-8">
@@ -125,36 +102,23 @@ export default function PayoutsPage() {
     <div className="px-4 py-6 sm:px-6 lg:px-8">
       <div className="mb-6">
         <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-          Payouts • {activeClub.name}
+          Transfers • {activeClub.name}
         </p>
-        <div className="mt-1 flex items-center justify-between">
+        <div className="mt-1">
           <h1 className="text-2xl font-semibold sm:text-3xl">
-            Payout Management
+            Transfer History
           </h1>
-          <Button onClick={() => setShowPayoutModal(true)}>
-            <Send className="mr-2 h-4 w-4" />
-            Request Payout
-          </Button>
         </div>
       </div>
-
-      <RequestPayoutModal
-        isOpen={showPayoutModal}
-        onClose={() => setShowPayoutModal(false)}
-        clubId={activeClub.id}
-        clubName={activeClub.name}
-        availableBalance={stats.availableBalance}
-        onSuccess={refreshPayouts}
-      />
 
       {!userHasPhone && (
         <Card className="mb-6 border-amber-500/50 bg-amber-500/10">
           <CardContent className="flex items-start gap-3 pt-6">
             <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5 shrink-0" />
             <div className="flex-1">
-              <h3 className="font-semibold text-amber-500 mb-1">Phone Number Required for Payout Notifications</h3>
+              <h3 className="font-semibold text-amber-500 mb-1">Phone Number Required for Auto-Transfer Notifications</h3>
               <p className="text-sm text-muted-foreground mb-3">
-                Add your phone number to receive SMS notifications when payouts are initiated and settled.
+                Add your phone number to receive instant SMS notifications when payments are automatically transferred to your Stripe account.
               </p>
               <Button 
                 variant="outline" 
@@ -174,12 +138,12 @@ export default function PayoutsPage() {
           <div className="flex items-start gap-3">
             <DollarSign className="h-5 w-5 text-blue-400 mt-0.5 shrink-0" />
             <div>
-              <h3 className="font-semibold text-blue-400 mb-1">Platform Fee: 5.5% + $0.30</h3>
+              <h3 className="font-semibold text-blue-400 mb-1">� Instant Payouts to Bank</h3>
               <p className="text-sm text-muted-foreground">
-                A platform fee of <strong>5.5% + $0.30</strong> is deducted from each payout to cover payment processing costs.
+                When members pay, funds are <strong>automatically sent to your bank account</strong> within minutes after a <strong>5.5% + $0.30</strong> platform fee.
               </p>
               <p className="text-xs text-muted-foreground mt-2">
-                Example: Request $100 → Platform fee $5.80 → You receive $94.20
+                Example: Member pays $100 → Platform fee $5.80 → $94.20 arrives in your bank within minutes
               </p>
             </div>
           </div>
@@ -204,9 +168,9 @@ export default function PayoutsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Send className="h-5 w-5 text-blue-400" />
-              Pending Payouts
+              In Transit
             </CardTitle>
-            <CardDescription>Processing transfers ({stats.pendingCount})</CardDescription>
+            <CardDescription>Currently processing ({stats.pendingCount})</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-semibold">${stats.pendingTotal.toFixed(2)}</div>
@@ -217,9 +181,9 @@ export default function PayoutsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CheckCircle className="h-5 w-5 text-emerald-400" />
-              All-Time Payouts
+              Total Transferred
             </CardTitle>
-            <CardDescription>Total withdrawn to date</CardDescription>
+            <CardDescription>All-time transfers to your account</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-semibold">${stats.totalPaidOut.toFixed(2)}</div>
@@ -229,8 +193,8 @@ export default function PayoutsPage() {
 
       <Card className="mt-6 border-border/70 bg-card/60">
         <CardHeader>
-          <CardTitle>Payout History</CardTitle>
-          <CardDescription>Recent payout transactions in {activeClub.name}</CardDescription>
+          <CardTitle>Transfer History</CardTitle>
+          <CardDescription>Recent automatic and manual transfers in {activeClub.name}</CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (

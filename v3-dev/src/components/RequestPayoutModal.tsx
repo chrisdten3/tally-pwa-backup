@@ -131,10 +131,10 @@ export default function RequestPayoutModal({
           onSuccess();
         }
 
-        // Auto-close after 3 seconds
+        // Auto-close after 4 seconds
         setTimeout(() => {
           onClose();
-        }, 3000);
+        }, 4000);
       }
     } catch (err) {
       console.error("Payout error:", err);
@@ -165,9 +165,9 @@ export default function RequestPayoutModal({
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/20">
               <DollarSign className="h-6 w-6 text-emerald-400" />
             </div>
-            <h2 className="mb-2 text-xl font-semibold">Payout Initiated!</h2>
+            <h2 className="mb-2 text-xl font-semibold">Transfer Complete!</h2>
             <p className="mb-4 text-sm text-muted-foreground">
-              Your payout has been successfully initiated.
+              Money has been transferred directly to your Stripe account.
             </p>
 
             {payoutDetails && (
@@ -182,7 +182,7 @@ export default function RequestPayoutModal({
                 </div>
                 <div className="border-t border-border/30 pt-2">
                   <div className="flex justify-between">
-                    <span className="font-semibold">You&apos;ll Receive:</span>
+                    <span className="font-semibold">In Your Account:</span>
                     <span className="font-semibold text-emerald-400">${payoutDetails.netPayoutAmount.toFixed(2)}</span>
                   </div>
                 </div>
@@ -194,19 +194,25 @@ export default function RequestPayoutModal({
                 <div className="flex gap-2">
                   <AlertCircle className="h-5 w-5 shrink-0 text-amber-500" />
                   <p className="text-xs text-muted-foreground">
-                    Add your phone number in settings to receive SMS notifications when this payout settles.
+                    Add your phone number in settings to receive SMS notifications for future transfers.
                   </p>
                 </div>
               </div>
             )}
 
             <p className="text-xs text-muted-foreground">
-              You&apos;ll receive an SMS when the payout settles in your bank account.
+              Funds are now in your Stripe account balance and will be instantly paid out to your bank (arrives within minutes).
             </p>
           </div>
         ) : (
           <>
-            <h2 className="mb-4 text-xl font-semibold">Request Payout</h2>
+            <h2 className="mb-4 text-xl font-semibold">Manual Payout</h2>
+
+            <div className="mb-4 rounded-lg border border-blue-500/50 bg-blue-500/10 p-3">
+              <p className="text-xs text-muted-foreground">
+                💡 <strong>Note:</strong> New payments are automatically transferred to your Stripe account. Use this only to withdraw any remaining club balance.
+              </p>
+            </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
@@ -253,7 +259,7 @@ export default function RequestPayoutModal({
 
               <div className="rounded-lg border border-blue-500/50 bg-blue-500/10 p-3">
                 <p className="text-xs text-muted-foreground">
-                  Payouts typically arrive in your bank account within minutes to a few hours. You&apos;ll receive an SMS notification when it settles.
+                  Funds will be instantly transferred to your bank account and arrive within minutes (instant payout fee may apply per Stripe&apos;s policy).
                 </p>
               </div>
 

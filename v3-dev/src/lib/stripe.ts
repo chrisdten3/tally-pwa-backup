@@ -83,7 +83,7 @@ export function verifyStripeSignature(payload: string, sigHeader: string | null)
       const candBuf = Buffer.from(candidate, "hex");
       if (candBuf.length !== sigBuf.length) continue;
       if (crypto.timingSafeEqual(candBuf, sigBuf)) return true;
-    } catch (e) {
+    } catch {
       continue;
     }
   }
@@ -148,24 +148,28 @@ export async function createAccountLink({ accountId, refreshUrl, returnUrl }: { 
   return j;
 }
 
-export async function createInstantPayout({
+export async function createDirectTransferWithFee({
   stripeAccountId,
   amountCents,
+  applicationFeeCents,
   currency = "usd",
   description,
 }: {
   stripeAccountId: string;
   amountCents: number;
+  applicationFeeCents: number;
   currency?: string;
   description?: string;
 }) {
   const secret = getSecret();
   
-  // First, create a transfer to the connected account's balance
+  // Create a direct transfer to the connected account with application fee
+  // The application fee is automatically deducted and goes to the platform
   const transferBody = new URLSearchParams();
   transferBody.append("amount", String(amountCents));
   transferBody.append("currency", currency);
   transferBody.append("destination", stripeAccountId);
+  transferBody.append("application_fee_amount", String(applicationFeeCents));
   if (description) transferBody.append("description", description);
 
   const transferRes = await fetch(`${STRIPE_BASE}/v1/transfers`, {
@@ -183,11 +187,38 @@ export async function createInstantPayout({
     throw new Error(msg);
   }
 
-  // Then, trigger an instant payout from the connected account to their bank
+  // Return transfer info - money goes directly to connected account
+  // The connected account will receive (amountCents - applicationFeeCents)
+  // Platform automatically receives applicationFeeCents
+  return {
+    transfer,
+    id: transfer.id,
+    status: transfer.status,
+    destination: transfer.destination,
+    amount: transfer.amount,
+    application_fee: transfer.application_fee_amount,
+  };
+}
+
+export async function createInstantPayoutToBank({
+  stripeAccountId,
+  amountCents,
+  currency = "usd",
+  description,
+}: {
+  stripeAccountId: string;
+  amountCents: number;
+  currency?: string;
+  description?: string;
+}) {
+  const secret = getSecret();
+  
+  // Trigger an instant payout from the connected account's balance to their bank
+  // This requires the connected account to have instant payouts enabled
   const payoutBody = new URLSearchParams();
   payoutBody.append("amount", String(amountCents));
   payoutBody.append("currency", currency);
-  payoutBody.append("method", "instant"); // instant payout
+  payoutBody.append("method", "instant"); // instant payout to bank
   if (description) payoutBody.append("description", description);
 
   const payoutRes = await fetch(`${STRIPE_BASE}/v1/payouts`, {
@@ -202,25 +233,27 @@ export async function createInstantPayout({
   });
   const payout = await payoutRes.json().catch(() => ({}));
   if (!payoutRes.ok) {
-    const msg = payout?.error?.message || JSON.stringify(payout) || "Stripe payout failed";
+    const msg = payout?.error?.message || JSON.stringify(payout) || "Stripe instant payout failed";
     throw new Error(msg);
   }
 
-  // Return combined info
   return {
-    transfer,
     payout,
     id: payout.id,
     status: payout.status,
     arrival_date: payout.arrival_date,
+    method: payout.method,
   };
 }
 
-export default {
+const stripeExports = {
   createCheckoutSession,
   verifyStripeSignature,
   amountToCents,
   createExpressAccount,
   createAccountLink,
-  createInstantPayout,
+  createDirectTransferWithFee,
+  createInstantPayoutToBank,
 };
+
+export default stripeExports;

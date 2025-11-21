@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import stripeLib from "@/lib/stripe";
 import { sendSMS } from "@/lib/twilio";
+import { createDirectTransferWithFee, createInstantPayoutToBank, amountToCents } from "@/lib/stripe";
 
 export async function POST(req: NextRequest) {
   try {
@@ -193,6 +194,154 @@ export async function POST(req: NextRequest) {
                 console.error(`[Stripe Webhook] Error creating ledger entry:`, ledgerError);
               } else {
                 console.log(`[Stripe Webhook] Ledger entry created: ${ledgerEntry.id}`);
+              }
+
+              // 🚀 AUTOMATIC PAYOUT: Transfer to admin's connected account immediately
+              console.log(`[Stripe Webhook] Initiating automatic transfer to admin's connected account`);
+              
+              // Get club owner/admin with Stripe account
+              const { data: membershipData } = await supabaseAdmin
+                .from("memberships")
+                .select("user_id, users!inner(id, email, name, stripe_account_id, phone)")
+                .eq("club_id", club.id)
+                .eq("role", "admin")
+                .limit(1);
+              
+              const adminMembership = membershipData?.[0];
+              const adminWithStripe = adminMembership?.users as { id: string; email: string; name: string; stripe_account_id?: string; phone?: string } | undefined;
+
+              if (adminWithStripe?.stripe_account_id) {
+                console.log(`[Stripe Webhook] Found admin ${adminWithStripe.id} with Stripe account ${adminWithStripe.stripe_account_id}`);
+                
+                // Calculate platform fee (5.5% + $0.30)
+                const paymentAmountInDollars = increment / 100;
+                const platformFeePercent = 0.055;
+                const platformFeeFixed = 0.30;
+                const platformFee = Number((paymentAmountInDollars * platformFeePercent + platformFeeFixed).toFixed(2));
+                const netTransferAmount = Number((paymentAmountInDollars - platformFee).toFixed(2));
+
+                console.log(`[Stripe Webhook] Payment: $${paymentAmountInDollars}, Fee: $${platformFee}, Net Transfer: $${netTransferAmount}`);
+
+                try {
+                  // Create direct transfer with platform fee
+                  const transferResult = await createDirectTransferWithFee({
+                    stripeAccountId: adminWithStripe.stripe_account_id,
+                    amountCents: amountToCents(paymentAmountInDollars),
+                    applicationFeeCents: amountToCents(platformFee),
+                    currency: "usd",
+                    description: `Auto-transfer from ${club.name} - Payment ${paymentId}`,
+                  });
+
+                  console.log(`[Stripe Webhook] Transfer successful: ${transferResult.id}`);
+
+                  // 🚀 INSTANT PAYOUT: Trigger immediate payout to admin's bank account
+                  let instantPayoutResult = null;
+                  try {
+                    console.log(`[Stripe Webhook] Triggering instant payout to bank for $${netTransferAmount}`);
+                    
+                    instantPayoutResult = await createInstantPayoutToBank({
+                      stripeAccountId: adminWithStripe.stripe_account_id,
+                      amountCents: amountToCents(netTransferAmount),
+                      currency: "usd",
+                      description: `Instant payout - Payment ${paymentId}`,
+                    });
+
+                    console.log(`[Stripe Webhook] Instant payout initiated: ${instantPayoutResult.id}, ETA: ${instantPayoutResult.arrival_date}`);
+                  } catch (payoutError: unknown) {
+                    console.error(`[Stripe Webhook] Instant payout failed (money still in Stripe balance):`, payoutError);
+                    // If instant payout fails, money stays in their Stripe balance
+                    // They'll get it on their regular payout schedule
+                  }
+
+                  // Create payout record for tracking
+                  const autoPayoutId = `autopayout_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+                  await supabaseAdmin.from("payouts").insert({
+                    id: autoPayoutId,
+                    club_id: club.id,
+                    amount: increment, // Store in cents
+                    currency: "USD",
+                    receiver: adminWithStripe.email || adminWithStripe.id,
+                    receiver_type: "STRIPE_ACCOUNT",
+                    provider: "stripe",
+                    provider_batch_id: instantPayoutResult?.id || transferResult.id,
+                    status: instantPayoutResult ? "paid" : (transferResult.status || "pending"),
+                    created_at: paidAt,
+                    raw: { transfer: transferResult, instantPayout: instantPayoutResult },
+                    initiated_by: adminWithStripe.id,
+                    recipient_user_id: adminWithStripe.id,
+                  });
+
+                  // Create ledger entry for automatic payout
+                  const autoPayoutLedgerId = `ledger_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+                  await supabaseAdmin.from("ledgers").insert({
+                    id: autoPayoutLedgerId,
+                    club_id: club.id,
+                    type: "payout",
+                    amount: -paymentAmountInDollars,
+                    balance_before: newBalance,
+                    balance_after: Number((newBalance - paymentAmountInDollars).toFixed(2)),
+                    user_id: adminWithStripe.id,
+                    completed_by_user_id: adminWithStripe.id,
+                    completed_by_email: adminWithStripe.email,
+                    completed_by_name: adminWithStripe.name,
+                    created_at: paidAt,
+                    description: `Auto-transfer (Platform fee: $${platformFee.toFixed(2)} [5.5% + $0.30], Net: $${netTransferAmount.toFixed(2)})`,
+                    payout_id: autoPayoutId,
+                    provider_batch_id: transferResult.id,
+                    payment_provider: "stripe",
+                  });
+
+                  // Create platform fee ledger entry
+                  const autoFeeLedgerId = `ledger_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+                  await supabaseAdmin.from("ledgers").insert({
+                    id: autoFeeLedgerId,
+                    club_id: club.id,
+                    type: "platform_fee",
+                    amount: platformFee,
+                    balance_before: Number((newBalance - paymentAmountInDollars).toFixed(2)),
+                    balance_after: Number((newBalance - paymentAmountInDollars).toFixed(2)),
+                    user_id: adminWithStripe.id,
+                    completed_by_user_id: adminWithStripe.id,
+                    completed_by_email: adminWithStripe.email,
+                    completed_by_name: adminWithStripe.name,
+                    created_at: paidAt,
+                    description: `Platform fee (5.5% + $0.30) for auto-transfer ${autoPayoutId}`,
+                    payout_id: autoPayoutId,
+                    payment_provider: "stripe",
+                  });
+
+                  // Update club balance (deduct the transferred amount)
+                  const balanceAfterTransfer = Number((newBalance - paymentAmountInDollars).toFixed(2));
+                  await supabaseAdmin
+                    .from("clubs")
+                    .update({ balance: balanceAfterTransfer })
+                    .eq("id", club.id);
+
+                  console.log(`[Stripe Webhook] Club balance updated to ${balanceAfterTransfer} after auto-transfer`);
+
+                  // Send SMS notification to admin
+                  if (adminWithStripe.phone) {
+                    const smsMessage = instantPayoutResult
+                      ? `� Instant payout complete! $${netTransferAmount.toFixed(2)} sent to your bank account (arrives within minutes). Payment from ${club.name}. Fee: $${platformFee.toFixed(2)}`
+                      : `�💰 Payment received: $${paymentAmountInDollars.toFixed(2)} transferred to your Stripe account. Fee: $${platformFee.toFixed(2)}. You receive: $${netTransferAmount.toFixed(2)}. From: ${club.name}`;
+                    
+                    try {
+                      await sendSMS({
+                        to: adminWithStripe.phone,
+                        message: smsMessage,
+                      });
+                      console.log(`[Stripe Webhook] Auto-transfer SMS sent to admin ${adminWithStripe.id}`);
+                    } catch (smsError) {
+                      console.error(`[Stripe Webhook] Failed to send auto-transfer SMS:`, smsError);
+                    }
+                  }
+                } catch (transferError) {
+                  console.error(`[Stripe Webhook] Auto-transfer failed:`, transferError);
+                  // Payment still succeeded, but auto-transfer failed
+                  // Admin can still manually request payout from balance
+                }
+              } else {
+                console.log(`[Stripe Webhook] No admin with Stripe account found for club ${club.id}, skipping auto-transfer`);
               }
             } else {
               console.error(`[Stripe Webhook] Club not found: ${assignment.club_id}`);
