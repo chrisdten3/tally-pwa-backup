@@ -695,9 +695,8 @@ export default function TallyLandingPage() {
             <span>© {new Date().getFullYear()}</span>
           </div>
           <div className="flex items-center gap-4">
-            <a href="#" className="hover:text-soft-white">Terms</a>
-            <a href="#" className="hover:text-soft-white">Privacy</a>
-            <a href="#" className="hover:text-soft-white">Contact</a>
+            <a href="/terms" className="hover:text-soft-white">Terms & Privacy</a>
+            <a href="mailto:tallyappv1@gmail.com" className="hover:text-soft-white">Contact</a>
           </div>
         </Section>
       </footer>
