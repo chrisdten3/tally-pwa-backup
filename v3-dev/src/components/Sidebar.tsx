@@ -10,6 +10,7 @@ import {
   DollarSign,
   Settings,
   LogOut,
+  Activity,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -94,6 +95,12 @@ export default function Sidebar() {
             label="Overview"
             href="/home"
             isActive={pathname === "/home"}
+          />
+          <SidebarLink
+            icon={Activity}
+            label="Activity"
+            href="/activity"
+            isActive={pathname === "/activity"}
           />
           <SidebarLink
             icon={CalendarDays}

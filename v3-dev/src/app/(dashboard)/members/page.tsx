@@ -69,10 +69,10 @@ export default function MembersPage() {
           <h1 className="text-2xl font-semibold sm:text-3xl">
             Manage Members
           </h1>
-          <Button>
+          {/* <Button>
             <UserPlus className="mr-2 h-4 w-4" />
             Add Member
-          </Button>
+          </Button> */}
         </div>
       </div>
 

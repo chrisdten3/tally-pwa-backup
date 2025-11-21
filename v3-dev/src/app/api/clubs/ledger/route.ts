@@ -26,7 +26,17 @@ export async function GET(req: Request) {
   const role = membershipRows?.[0]?.role;
   if (!role || role !== "admin") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const { data: ledger } = await supabaseAdmin.from("ledgers").select("*").eq("club_id", clubId).order("created_at", { ascending: false });
+  const { data: ledger } = await supabaseAdmin
+    .from("ledgers")
+    .select(`
+      *,
+      club_events:event_id (
+        id,
+        title
+      )
+    `)
+    .eq("club_id", clubId)
+    .order("created_at", { ascending: false });
 
   return NextResponse.json({ ledger: ledger || [], balance: club.balance || 0 });
 }

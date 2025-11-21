@@ -215,4 +215,9 @@
   body {
     @apply bg-background text-foreground;
   }
+  
+  /* White calendar icon for datetime inputs */
+  input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+  }
 }
