@@ -1,15 +1,16 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin, getUserByAccessToken } from "@/lib/supabase";
-import { createInstantPayout, amountToCents } from "@/lib/stripe";
+import { createDirectTransferWithFee, createInstantPayoutToBank, amountToCents } from "@/lib/stripe";
 import { sendSMS } from "@/lib/twilio";
 
 /**
  * POST /api/stripe/payout
  * Body: { clubId, userId, amount }
  * 
- * Creates an instant payout to a user's Stripe Connect account
- * Platform fee: 5.5% + $0.30 (covers Stripe's 2.9% + $0.30, nets 2.6% profit)
- * Sends SMS notification when payout is initiated
+ * Creates a direct transfer to a user's Stripe Connect account with platform fee
+ * Platform fee: 5.5% + $0.30 (covers Stripe's costs, nets profit for platform)
+ * Money goes directly to connected account - faster than 2-step process
+ * Sends SMS notification when transfer is initiated
  */
 export async function POST(req: Request) {
   const auth = req.headers.get("authorization") || "";
@@ -87,16 +88,38 @@ export async function POST(req: Request) {
   }
 
   try {
-    // Create instant payout via Stripe (send net amount after platform fee)
-    const amountInCents = amountToCents(netPayoutAmount);
+    // Create direct transfer with platform fee to connected account
+    // The full requested amount goes to the connected account
+    // Platform fee is automatically deducted by Stripe and sent to platform balance
+    const amountInCents = amountToCents(requestedAmount);
+    const platformFeeCents = amountToCents(platformFee);
     const description = body.description || `Payout from ${club.name || "club"} to ${recipientUser.email || recipientUser.name}`;
     
-    const stripeResult = await createInstantPayout({
+    const stripeResult = await createDirectTransferWithFee({
       stripeAccountId: recipientUser.stripe_account_id,
       amountCents: amountInCents,
+      applicationFeeCents: platformFeeCents,
       currency: "usd",
       description,
     });
+
+    // Trigger instant payout to bank account
+    let instantPayoutResult = null;
+    try {
+      console.log(`[Payout] Triggering instant payout to bank for $${netPayoutAmount}`);
+      
+      instantPayoutResult = await createInstantPayoutToBank({
+        stripeAccountId: recipientUser.stripe_account_id,
+        amountCents: amountToCents(netPayoutAmount),
+        currency: "usd",
+        description: `Instant payout - Manual request`,
+      });
+
+      console.log(`[Payout] Instant payout initiated: ${instantPayoutResult.id}`);
+    } catch (payoutError) {
+      console.error(`[Payout] Instant payout failed (money still in Stripe balance):`, payoutError);
+      // If instant payout fails, money stays in their Stripe balance
+    }
 
     // Persist payout in database
     const payoutId = `payout_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -112,10 +135,10 @@ export async function POST(req: Request) {
         receiver: recipientUser.email || recipientUser.id,
         receiver_type: "STRIPE_ACCOUNT",
         provider: "stripe",
-        provider_batch_id: stripeResult.id || stripeResult.payout?.id,
-        status: stripeResult.status || stripeResult.payout?.status || "pending",
+        provider_batch_id: instantPayoutResult?.id || stripeResult.id,
+        status: instantPayoutResult ? "paid" : (stripeResult.status || "pending"),
         created_at: nowIso,
-        raw: stripeResult,
+        raw: { transfer: stripeResult, instantPayout: instantPayoutResult },
         initiated_by: authUser.id,
         recipient_user_id: recipientUser.id,
       });
@@ -138,9 +161,9 @@ export async function POST(req: Request) {
         completed_by_email: authUser.email,
         completed_by_name: authUser.email,
         created_at: nowIso,
-        description: `${description} (Platform fee: $${platformFee.toFixed(2)} [5.5% + $0.30], Net payout: $${netPayoutAmount.toFixed(2)})`,
+        description: `${description} (Platform fee: $${platformFee.toFixed(2)} [5.5% + $0.30], Net transferred: $${netPayoutAmount.toFixed(2)})`,
         payout_id: payoutId,
-        provider_batch_id: stripeResult.id || stripeResult.payout?.id,
+        provider_batch_id: stripeResult.id,
         payment_provider: "stripe",
       });
 
@@ -158,7 +181,7 @@ export async function POST(req: Request) {
         completed_by_email: authUser.email,
         completed_by_name: authUser.email,
         created_at: nowIso,
-        description: `Platform fee (5.5% + $0.30) for payout ${payoutId}`,
+        description: `Platform fee (5.5% + $0.30) for transfer ${payoutId}`,
         payout_id: payoutId,
         payment_provider: "stripe",
       });
@@ -175,7 +198,9 @@ export async function POST(req: Request) {
       let smsSent = false;
       
       if (adminPhone) {
-        const notificationMessage = `Payout initiated: $${netPayoutAmount.toFixed(2)} to ${recipientUser.name || recipientUser.email}. Fee: $${platformFee.toFixed(2)} (5.5% + $0.30). ID: ${stripeResult.id || stripeResult.payout?.id}`;
+        const notificationMessage = instantPayoutResult
+          ? `🚀 Instant payout complete! $${netPayoutAmount.toFixed(2)} sent to ${recipientUser.name || recipientUser.email}'s bank (arrives within minutes). Fee: $${platformFee.toFixed(2)}. Transfer ID: ${stripeResult.id}`
+          : `Transfer complete: $${requestedAmount.toFixed(2)} sent to ${recipientUser.name || recipientUser.email}'s Stripe account. Platform fee: $${platformFee.toFixed(2)} (5.5% + $0.30). They receive: $${netPayoutAmount.toFixed(2)}. Transfer ID: ${stripeResult.id}`;
         
         try {
           await sendSMS({
@@ -195,13 +220,14 @@ export async function POST(req: Request) {
         ok: true,
         payout: {
           id: payoutId,
-          stripePayoutId: stripeResult.id || stripeResult.payout?.id,
-          stripeTransferId: stripeResult.transfer?.id,
+          stripeTransferId: stripeResult.id,
+          stripePayoutId: instantPayoutResult?.id,
+          instantPayout: !!instantPayoutResult,
           requestedAmount,
           platformFee,
           netPayoutAmount,
           feeStructure: "5.5% + $0.30",
-          status: stripeResult.status || stripeResult.payout?.status,
+          status: instantPayoutResult ? "paid" : stripeResult.status,
           recipient: recipientUser.email || recipientUser.name,
           newClubBalance: newBalance,
           smsSent,
@@ -211,16 +237,16 @@ export async function POST(req: Request) {
     } catch (dbError) {
       console.error("Failed to persist payout in database:", dbError);
       return NextResponse.json({ 
-        error: "Database error after payout created",
-        details: "Payout was sent but failed to record in database. Please contact support.",
-        stripePayoutId: stripeResult.id || stripeResult.payout?.id,
+        error: "Database error after transfer created",
+        details: "Transfer was sent but failed to record in database. Please contact support.",
+        stripeTransferId: stripeResult.id,
       }, { status: 500 });
     }
   } catch (e: unknown) {
-    console.error("Stripe payout error:", e);
+    console.error("Stripe transfer error:", e);
     const error = e as Error & { raw?: unknown };
     return NextResponse.json({ 
-      error: error?.message || "Failed to create payout",
+      error: error?.message || "Failed to create transfer",
       details: error?.raw || e,
     }, { status: 500 });
   }
