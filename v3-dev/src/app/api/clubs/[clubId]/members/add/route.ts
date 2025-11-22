@@ -47,7 +47,27 @@ export async function POST(
     const nowIso = new Date().toISOString();
     const fullName = `${firstName} ${lastName}`;
 
-    // Check if user with this phone or email already exists
+    // If phone is provided, check if it already exists in this club
+    if (phoneNumber) {
+      const { data: existingByPhone } = await supabaseAdmin
+        .from("users")
+        .select(`
+          id,
+          memberships!inner(club_id)
+        `)
+        .eq("phone", phoneNumber)
+        .eq("memberships.club_id", clubId)
+        .limit(1);
+
+      if (existingByPhone && existingByPhone.length > 0) {
+        return NextResponse.json(
+          { error: "A member with this phone number already exists in this club" },
+          { status: 409 }
+        );
+      }
+    }
+
+    // Check if user with this phone or email already exists globally
     let user;
     if (phoneNumber) {
       const { data: existingByPhone } = await supabaseAdmin
@@ -141,13 +161,14 @@ export async function POST(
         phone: user.phone,
         email: user.email,
         joinedAt: nowIso,
-        role: "member",
-      },
-    });
-  } catch (e: any) {
+      role: "member",
+    },
+  });
+  } catch (e) {
     console.error("[POST /api/clubs/[clubId]/members/add]", e);
+    const error = e as Error;
     return NextResponse.json(
-      { error: e?.message || "Server error" },
+      { error: error.message || "Server error" },
       { status: 500 }
     );
   }

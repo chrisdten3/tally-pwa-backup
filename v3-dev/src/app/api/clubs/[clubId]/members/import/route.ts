@@ -45,12 +45,38 @@ export async function POST(
     }
 
     const nowIso = new Date().toISOString();
+    
+    type ImportedMember = {
+      id: string;
+      name: string;
+      firstName: string;
+      lastName: string;
+      phone: string | null;
+      email: string | null;
+    };
+    
     const results = {
       success: 0,
       failed: 0,
       errors: [] as string[],
-      addedMembers: [] as any[],
+      addedMembers: [] as ImportedMember[],
     };
+
+    // Get all existing phone numbers in this club
+    const { data: existingMemberships } = await supabaseAdmin
+      .from("memberships")
+      .select(`
+        users (
+          phone
+        )
+      `)
+      .eq("club_id", clubId);
+
+    const existingPhones = new Set(
+      (existingMemberships || [])
+        .map((m) => (m as unknown as { users: { phone: string | null } | null }).users?.phone)
+        .filter((phone): phone is string => Boolean(phone))
+    );
 
     for (const member of members) {
       try {
@@ -69,7 +95,16 @@ export async function POST(
         const cleanPhone = phone ? phone.toString().trim() : null;
         const cleanEmail = email ? email.toString().trim().toLowerCase() : null;
 
-        // Check if user with this phone or email already exists
+        // Skip if phone already exists in this club
+        if (cleanPhone && existingPhones.has(cleanPhone)) {
+          results.failed++;
+          results.errors.push(
+            `Row skipped: Phone number ${cleanPhone} already exists in this club (${fullName})`
+          );
+          continue;
+        }
+
+        // Check if user with this phone or email already exists globally
         let user = null;
         
         if (cleanPhone) {
@@ -183,10 +218,11 @@ export async function POST(
           phone: cleanPhone,
           email: cleanEmail,
         });
-      } catch (error: any) {
+      } catch (error) {
+        const err = error as Error;
         results.failed++;
         results.errors.push(
-          `Error processing member: ${error.message}`
+          `Error processing member: ${err.message}`
         );
       }
     }
@@ -198,10 +234,11 @@ export async function POST(
       errors: results.errors,
       members: results.addedMembers,
     });
-  } catch (e: any) {
+  } catch (e) {
     console.error("[POST /api/clubs/[clubId]/members/import]", e);
+    const error = e as Error;
     return NextResponse.json(
-      { error: e?.message || "Server error" },
+      { error: error.message || "Server error" },
       { status: 500 }
     );
   }

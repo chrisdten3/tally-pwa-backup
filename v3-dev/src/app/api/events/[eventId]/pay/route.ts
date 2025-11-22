@@ -48,7 +48,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ eve
     if (existingUsers && existingUsers.length > 0) {
       user = existingUsers[0];
       
-      // Update user name if it has changed
+      // If they're a member, update their info (in case it changed)
+      // If they're not a member, this is fine - they can join via payment
       const fullName = `${firstName} ${lastName}`;
       if (user.name !== fullName || user.first_name !== firstName || user.last_name !== lastName || (email && user.email !== email)) {
         await supabaseAdmin
@@ -66,6 +67,26 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ eve
         if (email) user.email = email;
       }
     } else {
+      // Check if phone already exists for a different user in this club
+      // This prevents someone from using a phone number that belongs to another club member
+      const { data: clubMembersWithPhone } = await supabaseAdmin
+        .from("memberships")
+        .select(`
+          users!inner (
+            id,
+            phone
+          )
+        `)
+        .eq("club_id", event.club_id)
+        .eq("users.phone", phone)
+        .limit(1);
+
+      if (clubMembersWithPhone && clubMembersWithPhone.length > 0) {
+        return NextResponse.json({ 
+          error: "This phone number is already associated with a member of this club" 
+        }, { status: 409 });
+      }
+
       // Create new user
       const userId = `user_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
       const newUser = {
@@ -82,7 +103,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ eve
       user = newUser;
     }
 
-    // Check if user is already a member of the club
+    // Check if user is already a member of the club (moved outside to handle both cases)
     const { data: membershipRows } = await supabaseAdmin
       .from("memberships")
       .select("*")
@@ -193,16 +214,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ eve
       user: {
         id: user.id,
         name: user.name,
-        phone: user.phone,
-      }
-    });
-  } catch (e: any) {
+      phone: user.phone,
+    }
+  });
+  } catch (e) {
     console.error("[POST /api/events/[eventId]/pay]", e);
-    return NextResponse.json({ error: e.message || "Server error" }, { status: 500 });
+    const error = e as Error;
+    return NextResponse.json({ error: error.message || "Server error" }, { status: 500 });
   }
-}
-
-/**
+}/**
  * GET /api/events/[eventId]/pay
  * Get event details for public payment page
  */
@@ -247,8 +267,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ even
         club: event.clubs,
       }
     });
-  } catch (e: any) {
+  } catch (e) {
     console.error("[GET /api/events/[eventId]/pay]", e);
-    return NextResponse.json({ error: e.message || "Server error" }, { status: 500 });
+    const error = e as Error;
+    return NextResponse.json({ error: error.message || "Server error" }, { status: 500 });
   }
 }
