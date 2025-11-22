@@ -368,6 +368,49 @@ export async function POST(req: NextRequest) {
         }
       }
 
+      // Handle Stripe Connect account onboarding completion
+      if (event.type === "account.updated") {
+        console.log("[Stripe Webhook] Processing account.updated event");
+        const accountData = event.data?.object;
+        const accountId = accountData?.id;
+        const detailsSubmitted = accountData?.details_submitted;
+        const chargesEnabled = accountData?.charges_enabled;
+        const payoutsEnabled = accountData?.payouts_enabled;
+        const metadata = accountData?.metadata;
+
+        console.log(`[Stripe Webhook] Account ID: ${accountId}, Details Submitted: ${detailsSubmitted}, Charges Enabled: ${chargesEnabled}, Payouts Enabled: ${payoutsEnabled}`);
+
+        // Only store the account ID when onboarding is complete
+        if (accountId && detailsSubmitted && chargesEnabled && metadata?.user_id) {
+          console.log(`[Stripe Webhook] Account ${accountId} fully onboarded, storing for user ${metadata.user_id}`);
+          
+          // Check if this user already has this account ID stored
+          const { data: existingUser } = await supabaseAdmin
+            .from("users")
+            .select("stripe_account_id")
+            .eq("id", metadata.user_id)
+            .single();
+
+          if (!existingUser?.stripe_account_id) {
+            // Store the account ID in the database
+            const { error: updateError } = await supabaseAdmin
+              .from("users")
+              .update({ stripe_account_id: accountId })
+              .eq("id", metadata.user_id);
+
+            if (updateError) {
+              console.error(`[Stripe Webhook] Error storing stripe_account_id:`, updateError);
+            } else {
+              console.log(`[Stripe Webhook] Successfully stored stripe_account_id ${accountId} for user ${metadata.user_id}`);
+            }
+          } else {
+            console.log(`[Stripe Webhook] User ${metadata.user_id} already has stripe_account_id: ${existingUser.stripe_account_id}`);
+          }
+        } else if (accountId && metadata?.user_id) {
+          console.log(`[Stripe Webhook] Account ${accountId} not yet fully onboarded (details_submitted: ${detailsSubmitted}, charges_enabled: ${chargesEnabled})`);
+        }
+      }
+
       // Handle payout events (for instant payouts to connected accounts)
       if (event.type === "payout.paid") {
         console.log("[Stripe Webhook] Processing payout.paid event");

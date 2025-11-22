@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getUserByAccessToken, supabaseAdmin } from "@/lib/supabase";
-import { createExpressAccount, createAccountLink } from "@/lib/stripe";
+import { createExpressAccount, createAccountLink, retrieveAccount } from "@/lib/stripe";
 
 export async function POST(req: Request) {
   const auth = req.headers.get("authorization") || "";
@@ -18,11 +18,34 @@ export async function POST(req: Request) {
 
     let accountId = existingUser?.stripe_account_id;
 
+    // If user already has an account ID, verify it's actually complete
+    if (accountId) {
+      try {
+        const accountDetails = await retrieveAccount(accountId);
+        // If account is fully onboarded, they don't need to onboard again
+        if (accountDetails.details_submitted && accountDetails.charges_enabled) {
+          console.log("User already has a completed Stripe account:", authUser.id, accountId);
+          return NextResponse.json({ 
+            error: "Account already onboarded", 
+            accountId,
+            alreadyOnboarded: true 
+          }, { status: 400 });
+        }
+        // If account exists but isn't complete, continue with onboarding
+        console.log("User has incomplete Stripe account, continuing onboarding:", authUser.id, accountId);
+      } catch (e) {
+        // If we can't retrieve the account, it might be deleted - create a new one
+        console.log("Could not retrieve existing account, will create new one:", e);
+        accountId = null;
+      }
+    }
+
     // If no account exists, create a new one
     if (!accountId) {
       const acct = await createExpressAccount({ 
         country: "US", 
-        email: authUser.email || undefined 
+        email: authUser.email || undefined,
+        metadata: { user_id: authUser.id } // Store user ID in Stripe metadata for webhook
       });
       
       if (!acct || !acct.id) {
@@ -31,12 +54,9 @@ export async function POST(req: Request) {
 
       accountId = acct.id;
 
-      // Store the account ID in Supabase
-      console.log("Storing Stripe Account ID for user:", authUser.id, accountId);
-      await supabaseAdmin
-        .from("users")
-        .update({ stripe_account_id: accountId })
-        .eq("id", authUser.id);
+      // DON'T store the account ID yet - wait for webhook to confirm onboarding completion
+      // This prevents the issue where users start onboarding but never complete it
+      console.log("Created Stripe Account for user:", authUser.id, accountId, "- awaiting onboarding completion");
     }
 
     // Build origin-based URLs for Stripe onboarding

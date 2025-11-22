@@ -95,12 +95,25 @@ export function amountToCents(amount: number | string) {
   return Math.round(n * 100);
 }
 
-export async function createExpressAccount({ country = "US", email }: { country?: string; email?: string }) {
+export async function createExpressAccount({ 
+  country = "US", 
+  email,
+  metadata 
+}: { 
+  country?: string; 
+  email?: string;
+  metadata?: Record<string, string>;
+}) {
   const secret = getSecret();
   const body = new URLSearchParams();
   body.append("type", "express");
   if (country) body.append("country", country);
   if (email) body.append("email", email);
+  if (metadata) {
+    Object.entries(metadata).forEach(([key, value]) => {
+      body.append(`metadata[${key}]`, value);
+    });
+  }
   // NOTE: some Stripe API configurations reject capabilities at account creation.
   // To maximize compatibility, don't request capabilities here; platforms can request them
   // later via the Accounts API if necessary.
@@ -118,6 +131,24 @@ export async function createExpressAccount({ country = "US", email }: { country?
   if (!res.ok) {
     // include the full Stripe response for easier debugging (safe for dev)
     const msg = j?.error?.message || JSON.stringify(j) || "Stripe create account failed";
+    throw new Error(msg);
+  }
+  return j;
+}
+
+export async function retrieveAccount(accountId: string) {
+  const secret = getSecret();
+  
+  const res = await fetch(`${STRIPE_BASE}/v1/accounts/${accountId}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${secret}`,
+    },
+    cache: "no-store",
+  });
+  const j = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const msg = j?.error?.message || JSON.stringify(j) || "Stripe retrieve account failed";
     throw new Error(msg);
   }
   return j;
@@ -251,6 +282,7 @@ const stripeExports = {
   verifyStripeSignature,
   amountToCents,
   createExpressAccount,
+  retrieveAccount,
   createAccountLink,
   createDirectTransferWithFee,
   createInstantPayoutToBank,

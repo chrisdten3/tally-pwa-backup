@@ -7,7 +7,7 @@ export async function GET(req: Request) {
     
     // Stripe returns the user to this URL after onboarding
     // We can redirect them to a success page
-    const successUrl = `${url.origin}/settings?stripe=success`;
+    const successUrl = `${url.origin}/home`;
     
     return NextResponse.redirect(successUrl);
   } catch (e) {
