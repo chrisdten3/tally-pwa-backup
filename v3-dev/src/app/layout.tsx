@@ -33,7 +33,6 @@ export default function RootLayout({
         className={`${inter.variable} ${jetbrainsMono.variable} antialiased`}
       >
         {children}
-        <FeedbackButton />
         <Analytics />
       </body>
     </html>
