@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,7 +22,6 @@ type EventData = {
 
 export default function PublicEventPaymentPage() {
   const params = useParams();
-  const router = useRouter();
   const eventId = params.eventId as string;
 
   const [loading, setLoading] = useState(true);
@@ -36,6 +35,47 @@ export default function PublicEventPaymentPage() {
     phone: "",
     email: "",
   });
+  const [phoneChecked, setPhoneChecked] = useState(false);
+  const [isCheckingPhone, setIsCheckingPhone] = useState(false);
+
+  // Check phone number when it changes
+  useEffect(() => {
+    const checkPhone = async () => {
+      const phone = formData.phone.trim();
+      
+      // Only check if phone is valid (at least 10 digits)
+      if (phone.replace(/\D/g, "").length < 10) {
+        setPhoneChecked(false);
+        return;
+      }
+
+      setIsCheckingPhone(true);
+      try {
+        const response = await fetch(`/api/events/${eventId}/check-phone?phone=${encodeURIComponent(phone)}`);
+        const data = await response.json();
+
+        if (data.exists && data.user) {
+          // Auto-populate fields with existing user data
+          setFormData({
+            firstName: data.user.firstName,
+            lastName: data.user.lastName,
+            phone: data.user.phone,
+            email: data.user.email,
+          });
+          setPhoneChecked(true);
+        } else {
+          setPhoneChecked(false);
+        }
+      } catch (err) {
+        console.error("Failed to check phone:", err);
+      } finally {
+        setIsCheckingPhone(false);
+      }
+    };
+
+    const debounce = setTimeout(checkPhone, 500);
+    return () => clearTimeout(debounce);
+  }, [formData.phone, eventId]);
 
   useEffect(() => {
     if (!eventId) return;
@@ -81,9 +121,10 @@ export default function PublicEventPaymentPage() {
       } else {
         throw new Error("No payment URL returned");
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error("Payment error:", err);
-      setError(err.message || "Failed to initiate payment");
+      const error = err as Error;
+      setError(error.message || "Failed to initiate payment");
       setSubmitting(false);
     }
   };
@@ -153,54 +194,69 @@ export default function PublicEventPaymentPage() {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <label htmlFor="firstName" className="text-sm font-medium">
-                    First Name *
-                  </label>
-                  <Input
-                    id="firstName"
-                    placeholder="John"
-                    value={formData.firstName}
-                    onChange={(e) =>
-                      setFormData({ ...formData, firstName: e.target.value })
-                    }
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="lastName" className="text-sm font-medium">
-                    Last Name *
-                  </label>
-                  <Input
-                    id="lastName"
-                    placeholder="Doe"
-                    value={formData.lastName}
-                    onChange={(e) =>
-                      setFormData({ ...formData, lastName: e.target.value })
-                    }
-                    required
-                  />
-                </div>
-              </div>
-
               <div className="space-y-2">
                 <label htmlFor="phone" className="text-sm font-medium">
                   Phone Number *
                 </label>
+                <div className="relative">
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="(555) 123-4567"
+                    value={formData.phone}
+                    onChange={(e) =>
+                      setFormData({ ...formData, phone: e.target.value })
+                    }
+                    required
+                    disabled={phoneChecked}
+                  />
+                  {isCheckingPhone && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    </div>
+                  )}
+                </div>
+                {phoneChecked ? (
+                  <p className="text-xs text-mint-leaf">
+                    ✓ Information auto-filled from your club profile
+                  </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Subject to SMS messaging rates.
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="firstName" className="text-sm font-medium">
+                  First Name *
+                </label>
                 <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="(555) 123-4567"
-                  value={formData.phone}
+                  id="firstName"
+                  placeholder="John"
+                  value={formData.firstName}
                   onChange={(e) =>
-                    setFormData({ ...formData, phone: e.target.value })
+                    setFormData({ ...formData, firstName: e.target.value })
                   }
                   required
+                  disabled={phoneChecked}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Subject to SMS messaging rates.
-                </p>
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="lastName" className="text-sm font-medium">
+                  Last Name *
+                </label>
+                <Input
+                  id="lastName"
+                  placeholder="Doe"
+                  value={formData.lastName}
+                  onChange={(e) =>
+                    setFormData({ ...formData, lastName: e.target.value })
+                  }
+                  required
+                  disabled={phoneChecked}
+                />
               </div>
 
               <div className="space-y-2">
@@ -226,7 +282,7 @@ export default function PublicEventPaymentPage() {
 
               <div className="bg-mint-leaf/10 dark:bg-mint-leaf/20 border border-mint-leaf/30 dark:border-mint-leaf/50 rounded-lg p-3">
                 <p className="text-sm text-prussian-blue dark:text-mint-leaf">
-                  <strong>Note:</strong> After payment, you'll be automatically added to{" "}
+                  <strong>Note:</strong> After payment, you&apos;ll be automatically added to{" "}
                   {event.club.name}
                 </p>
               </div>
