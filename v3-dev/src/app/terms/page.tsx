@@ -156,6 +156,9 @@ export default function TermsAndPrivacyPage() {
                 <li>Other members of your organization as necessary for club operations</li>
                 <li>Law enforcement when required by law</li>
               </ul>
+              <p className="mt-4 font-medium">
+                All the above categories exclude text messaging originator opt-in data and consent; this information will not be shared with any third parties.
+              </p>
             </div>
 
             <div>
