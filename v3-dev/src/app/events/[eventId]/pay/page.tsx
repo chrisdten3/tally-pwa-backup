@@ -242,9 +242,9 @@ export default function PublicEventPaymentPage() {
                       required
                     />
                     <label htmlFor="smsConsent" className="text-xs cursor-pointer flex-1">
-                      <span className="font-medium">SMS Consent Required</span>
+                      <span className="font-medium">Opt in to SMS updates</span>
                       <p className="mt-0.5 text-xs text-muted-foreground leading-snug">
-                        By providing your phone number, you consent to receive text messages from Tally with updates on payments, membership, or club activity. Message and data rates apply. Frequency varies. Reply HELP for help or STOP to opt out. See our privacy policy.
+                        I consent to receive text messages from Tally with updates on payments, membership, or club activity. Message and data rates may apply. Frequency varies. Reply HELP for help or STOP to opt out. See our privacy policy.
                       </p>
                     </label>
                   </div>
