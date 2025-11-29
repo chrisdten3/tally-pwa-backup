@@ -379,19 +379,35 @@ export async function POST(req: NextRequest) {
         const metadata = accountData?.metadata;
 
         console.log(`[Stripe Webhook] Account ID: ${accountId}, Details Submitted: ${detailsSubmitted}, Charges Enabled: ${chargesEnabled}, Payouts Enabled: ${payoutsEnabled}`);
+        console.log(`[Stripe Webhook] Metadata:`, JSON.stringify(metadata));
 
-        // Only store the account ID when onboarding is complete
-        if (accountId && detailsSubmitted && chargesEnabled && metadata?.user_id) {
+        if (!accountId) {
+          console.error("[Stripe Webhook] No account ID in account.updated event");
+          return NextResponse.json({ received: true });
+        }
+
+        if (!metadata?.user_id) {
+          console.error("[Stripe Webhook] No user_id in metadata for account.updated event. Account:", accountId);
+          return NextResponse.json({ received: true });
+        }
+
+        // Store or update the account ID when onboarding is complete
+        if (detailsSubmitted && chargesEnabled) {
           console.log(`[Stripe Webhook] Account ${accountId} fully onboarded, storing for user ${metadata.user_id}`);
           
           // Check if this user already has this account ID stored
-          const { data: existingUser } = await supabaseAdmin
+          const { data: existingUser, error: selectError } = await supabaseAdmin
             .from("users")
             .select("stripe_account_id")
             .eq("id", metadata.user_id)
             .single();
 
-          if (!existingUser?.stripe_account_id) {
+          if (selectError) {
+            console.error(`[Stripe Webhook] Error fetching user:`, selectError);
+            return NextResponse.json({ received: true });
+          }
+
+          if (!existingUser?.stripe_account_id || existingUser.stripe_account_id !== accountId) {
             // Store the account ID in the database
             const { error: updateError } = await supabaseAdmin
               .from("users")
@@ -404,10 +420,11 @@ export async function POST(req: NextRequest) {
               console.log(`[Stripe Webhook] Successfully stored stripe_account_id ${accountId} for user ${metadata.user_id}`);
             }
           } else {
-            console.log(`[Stripe Webhook] User ${metadata.user_id} already has stripe_account_id: ${existingUser.stripe_account_id}`);
+            console.log(`[Stripe Webhook] User ${metadata.user_id} already has correct stripe_account_id: ${existingUser.stripe_account_id}`);
           }
-        } else if (accountId && metadata?.user_id) {
+        } else {
           console.log(`[Stripe Webhook] Account ${accountId} not yet fully onboarded (details_submitted: ${detailsSubmitted}, charges_enabled: ${chargesEnabled})`);
+          console.log(`[Stripe Webhook] Will wait for completion before storing account ID`);
         }
       }
 
