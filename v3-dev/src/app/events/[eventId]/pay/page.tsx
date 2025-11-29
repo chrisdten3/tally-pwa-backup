@@ -37,6 +37,8 @@ export default function PublicEventPaymentPage() {
   });
   const [phoneChecked, setPhoneChecked] = useState(false);
   const [isCheckingPhone, setIsCheckingPhone] = useState(false);
+  const [smsConsent, setSmsConsent] = useState(false);
+  const [isExistingUser, setIsExistingUser] = useState(false);
 
   // Check phone number when it changes
   useEffect(() => {
@@ -63,8 +65,10 @@ export default function PublicEventPaymentPage() {
             email: data.user.email,
           });
           setPhoneChecked(true);
+          setIsExistingUser(true);
         } else {
           setPhoneChecked(false);
+          setIsExistingUser(false);
         }
       } catch (err) {
         console.error("Failed to check phone:", err);
@@ -107,7 +111,10 @@ export default function PublicEventPaymentPage() {
       const response = await fetch(`/api/events/${eventId}/pay`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          smsConsent,
+        }),
       });
 
       const data = await response.json();
@@ -155,33 +162,33 @@ export default function PublicEventPaymentPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-soft-white to-cool-gray/20 dark:from-onyx dark:to-prussian-blue p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-soft-white to-cool-gray/20 dark:from-onyx dark:to-prussian-blue p-3">
       <Card className="max-w-lg w-full shadow-xl">
-        <CardHeader className="space-y-3">
+        <CardHeader className="space-y-2 pb-4">
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <CardTitle className="text-2xl mb-2">{event.title}</CardTitle>
-              <div className="flex items-center gap-2 text-muted-foreground mb-1">
-                <Building2 className="h-4 w-4" />
-                <span className="text-sm">{event.club.name}</span>
+              <CardTitle className="text-xl mb-1.5">{event.title}</CardTitle>
+              <div className="flex items-center gap-2 text-muted-foreground mb-0.5">
+                <Building2 className="h-3.5 w-3.5" />
+                <span className="text-xs">{event.club.name}</span>
               </div>
               {event.expiresAt && (
                 <div className="flex items-center gap-2 text-muted-foreground">
-                  <Clock className="h-4 w-4" />
-                  <span className="text-sm">
+                  <Clock className="h-3.5 w-3.5" />
+                  <span className="text-xs">
                     Expires: {new Date(event.expiresAt).toLocaleDateString()}
                   </span>
                 </div>
               )}
             </div>
             <div className="text-right">
-              <div className="text-3xl font-bold text-cool-gray dark:text-soft-white">
+              <div className="text-2xl font-bold text-cool-gray dark:text-soft-white">
                 ${(event.amount / 100).toFixed(2)}
               </div>
             </div>
           </div>
           {event.description && (
-            <CardDescription className="text-base">{event.description}</CardDescription>
+            <CardDescription className="text-sm">{event.description}</CardDescription>
           )}
         </CardHeader>
 
@@ -193,8 +200,8 @@ export default function PublicEventPaymentPage() {
               </p>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
+            <form onSubmit={handleSubmit} className="space-y-3">
+              <div className="space-y-1.5">
                 <label htmlFor="phone" className="text-sm font-medium">
                   Phone Number *
                 </label>
@@ -216,18 +223,35 @@ export default function PublicEventPaymentPage() {
                     </div>
                   )}
                 </div>
-                {phoneChecked ? (
+                {phoneChecked && (
                   <p className="text-xs text-mint-leaf">
                     ✓ Information auto-filled from your club profile
-                  </p>
-                ) : (
-                  <p className="text-xs text-muted-foreground">
-                    Subject to SMS messaging rates.
                   </p>
                 )}
               </div>
 
-              <div className="space-y-2">
+              {!isExistingUser && (
+                <div className="bg-muted/50 p-3 rounded-lg border">
+                  <div className="flex items-start gap-2.5">
+                    <input
+                      type="checkbox"
+                      id="smsConsent"
+                      checked={smsConsent}
+                      onChange={(e) => setSmsConsent(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 rounded border-gray-300 text-bright-indigo focus:ring-bright-indigo cursor-pointer"
+                      required
+                    />
+                    <label htmlFor="smsConsent" className="text-xs cursor-pointer flex-1">
+                      <span className="font-medium">Opt in to SMS updates</span>
+                      <p className="mt-0.5 text-xs text-muted-foreground leading-snug">
+                        I consent to receive text messages from Tally with updates on payments, membership, or club activity. Message and data rates may apply. Frequency varies. Reply HELP for help or STOP to opt out. See our privacy policy.
+                      </p>
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-1.5">
                 <label htmlFor="firstName" className="text-sm font-medium">
                   First Name *
                 </label>
@@ -243,7 +267,7 @@ export default function PublicEventPaymentPage() {
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <label htmlFor="lastName" className="text-sm font-medium">
                   Last Name *
                 </label>
@@ -259,7 +283,7 @@ export default function PublicEventPaymentPage() {
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <label htmlFor="email" className="text-sm font-medium">
                   Email (optional)
                 </label>
@@ -275,13 +299,13 @@ export default function PublicEventPaymentPage() {
               </div>
 
               {error && (
-                <div className="bg-danger-red/10 dark:bg-danger-red/20 border border-danger-red/30 dark:border-danger-red/50 rounded-lg p-3">
-                  <p className="text-sm text-danger-red">{error}</p>
+                <div className="bg-danger-red/10 dark:bg-danger-red/20 border border-danger-red/30 dark:border-danger-red/50 rounded-lg p-2.5">
+                  <p className="text-xs text-danger-red">{error}</p>
                 </div>
               )}
 
-              <div className="bg-mint-leaf/10 dark:bg-mint-leaf/20 border border-mint-leaf/30 dark:border-mint-leaf/50 rounded-lg p-3">
-                <p className="text-sm text-prussian-blue dark:text-mint-leaf">
+              <div className="bg-mint-leaf/10 dark:bg-mint-leaf/20 border border-mint-leaf/30 dark:border-mint-leaf/50 rounded-lg p-2.5">
+                <p className="text-xs text-prussian-blue dark:text-mint-leaf">
                   <strong>Note:</strong> After payment, you&apos;ll be automatically added to{" "}
                   {event.club.name}
                 </p>
@@ -289,7 +313,7 @@ export default function PublicEventPaymentPage() {
 
               <Button
                 type="submit"
-                className="w-full h-12 text-lg"
+                className="w-full h-11 text-base"
                 disabled={submitting}
               >
                 {submitting ? (
@@ -308,7 +332,7 @@ export default function PublicEventPaymentPage() {
           )}
         </CardContent>
 
-        <CardFooter className="flex justify-center border-t pt-6">
+        <CardFooter className="flex justify-center border-t pt-4">
           <p className="text-xs text-muted-foreground text-center">
             Secure payment powered by Stripe
           </p>
