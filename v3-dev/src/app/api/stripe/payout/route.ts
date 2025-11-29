@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin, getUserByAccessToken } from "@/lib/supabase";
 import { createDirectTransferWithFee, createInstantPayoutToBank, amountToCents } from "@/lib/stripe";
-import { sendSMS } from "@/lib/twilio";
+import { sendSMS } from "@/lib/surge";
 
 /**
  * POST /api/stripe/payout

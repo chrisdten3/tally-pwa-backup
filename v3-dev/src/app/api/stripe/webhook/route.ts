@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import stripeLib from "@/lib/stripe";
-import { sendSMS } from "@/lib/twilio";
+import { sendSMS } from "@/lib/surge";
 import { createDirectTransferWithFee, createInstantPayoutToBank, amountToCents } from "@/lib/stripe";
 
 export async function POST(req: NextRequest) {

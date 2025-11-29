@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin, getUserByAccessToken } from "@/lib/supabase";
-import { sendBulkSMS, formatEventNotification } from "@/lib/twilio";
+import { sendBulkSMS, formatEventNotification } from "@/lib/surge";
 
 export async function GET(req: Request) {
   try {
