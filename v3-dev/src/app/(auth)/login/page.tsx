@@ -1,12 +1,12 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import AuthCard from "../../../components/AuthCard";
 import FormInput from "../../../components/FormInput";
 import Button from "../../../components/Button";
 
-export default function LoginPage() {
+function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -121,5 +121,19 @@ export default function LoginPage() {
         </div>
       </form>
     </AuthCard>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <AuthCard title="Welcome back" subtitle="Log in to your Tally account">
+        <div className="flex justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+        </div>
+      </AuthCard>
+    }>
+      <LoginForm />
+    </Suspense>
   );
 }

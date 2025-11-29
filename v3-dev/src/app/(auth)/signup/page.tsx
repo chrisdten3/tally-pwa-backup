@@ -1,12 +1,12 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import AuthCard from "../../../components/AuthCard";
 import FormInput from "../../../components/FormInput";
 import Button from "../../../components/Button";
 
-export default function SignupPage() {
+function SignupForm() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -143,5 +143,19 @@ export default function SignupPage() {
         </div>
       </form>
     </AuthCard>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={
+      <AuthCard title="Create account" subtitle="Sign up for Tally">
+        <div className="flex justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+        </div>
+      </AuthCard>
+    }>
+      <SignupForm />
+    </Suspense>
   );
 }
