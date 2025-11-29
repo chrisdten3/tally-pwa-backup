@@ -244,51 +244,33 @@ export default function HomePage() {
 
             {/* Stripe Onboarding Card - only show if user needs to onboard */}
             {needsStripeOnboarding && (
-              <div
-                onClick={async () => {
-                const token = localStorage.getItem("token");
-                if (!token) return;
-                try {
-                    const res = await fetch("/api/stripe/connect/onboard", {
-                    method: "POST",
-                    headers: { Authorization: `Bearer ${token}` },
-                    });
-                    const data = await res.json();
-                    if (data?.url) {
-                    window.location.href = data.url;
-                    } else {
-                    alert(data?.error || "Failed to start onboarding");
-                    }
-                } catch {
-                    alert("Failed to start onboarding");
-                }
-                }}
-                className="group cursor-pointer rounded-3xl border border-zinc-800 bg-zinc-950/80 p-8 transition-all hover:border-[#47E6B1] hover:bg-zinc-900/90 hover:shadow-[0_0_40px_rgba(71,230,177,0.25)]"
-              >
-                <div className="flex flex-col items-center space-y-6 text-center">
-                <div className="grid h-24 w-24 place-items-center rounded-2xl bg-[rgba(71,230,177,0.16)] p-4 shadow-[0_0_26px_rgba(71,230,177,0.4)] transition group-hover:bg-mint-leaf">
-                    <Image
-                    src="/icons8-stripe-100.png"
-                    alt="Stripe"
-                    width={80}
-                    height={80}
-                    className="object-contain"
-                    />
-                </div>
-                <div>
-                    <h3 className="mb-3 text-2xl font-bold">Onboard with Stripe</h3>
-                    <p className="text-base leading-relaxed text-zinc-300">
-                    Connect your bank account through Stripe to receive payments from your club.
-                    </p>
-                </div>
-                <div className="pt-4">
-                    <div className="inline-flex items-center gap-2 rounded-xl bg-[#47E6B1] px-8 py-3 text-base font-semibold text-slate-950 shadow-[0_0_24px_rgba(71,230,177,0.35)] transition group-hover:bg-[#63F0C3]">
-                    Connect Account
-                    <ArrowRight size={18} />
+              <Link href="/stripe-onboarding">
+                <div className="group cursor-pointer rounded-3xl border border-zinc-800 bg-zinc-950/80 p-8 transition-all hover:border-[#47E6B1] hover:bg-zinc-900/90 hover:shadow-[0_0_40px_rgba(71,230,177,0.25)]">
+                  <div className="flex flex-col items-center space-y-6 text-center">
+                    <div className="grid h-24 w-24 place-items-center rounded-2xl bg-[rgba(71,230,177,0.16)] p-4 shadow-[0_0_26px_rgba(71,230,177,0.4)] transition group-hover:bg-mint-leaf">
+                      <Image
+                        src="/icons8-stripe-100.png"
+                        alt="Stripe"
+                        width={80}
+                        height={80}
+                        className="object-contain"
+                      />
                     </div>
+                    <div>
+                      <h3 className="mb-3 text-2xl font-bold">Onboard with Stripe</h3>
+                      <p className="text-base leading-relaxed text-zinc-300">
+                        Connect your bank account through Stripe to receive payments from your club.
+                      </p>
+                    </div>
+                    <div className="pt-4">
+                      <div className="inline-flex items-center gap-2 rounded-xl bg-[#47E6B1] px-8 py-3 text-base font-semibold text-slate-950 shadow-[0_0_24px_rgba(71,230,177,0.35)] transition group-hover:bg-[#63F0C3]">
+                        Connect Account
+                        <ArrowRight size={18} />
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                </div>
-              </div>
+              </Link>
             )}
             </div>
           </div>
