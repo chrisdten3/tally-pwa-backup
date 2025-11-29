@@ -21,9 +21,20 @@ export async function POST(req: Request) {
     const link = await createAccountLink({ accountId: acct.id, refreshUrl: profileUrl, returnUrl: profileUrl });
     if (!link || !link.url) return NextResponse.json({ error: "Failed to create account link" }, { status: 500 });
 
-    //Store the account ID in Supabase here 
+    //Store the account ID in Supabase immediately
     console.log("Storing Stripe Account ID for user:", authUser.id, acct.id);
-    await supabaseAdmin.from("users").update({ stripe_account_id: acct.id }).eq("id", authUser.id);
+    const { data: updateData, error: updateError } = await supabaseAdmin
+      .from("users")
+      .update({ stripe_account_id: acct.id })
+      .eq("id", authUser.id)
+      .select();
+    
+    if (updateError) {
+      console.error("Failed to store stripe_account_id:", updateError);
+      return NextResponse.json({ error: "Failed to store account ID" }, { status: 500 });
+    }
+    
+    console.log("Successfully stored stripe_account_id:", updateData);
 
     return NextResponse.json({ url: link.url });
   } catch (e) {

@@ -56,17 +56,19 @@ export async function POST(req: Request) {
 
       // Store the account ID immediately so user can start using it
       // The webhook will verify completion later
-      const { error: storeError } = await supabaseAdmin
+      console.log("Storing Stripe Account ID for user:", authUser.id, accountId);
+      const { data: updateData, error: storeError } = await supabaseAdmin
         .from("users")
         .update({ stripe_account_id: accountId })
-        .eq("id", authUser.id);
+        .eq("id", authUser.id)
+        .select();
 
       if (storeError) {
-        console.error("Error storing initial stripe_account_id:", storeError);
-      } else {
-        console.log("Stored initial stripe_account_id for user:", authUser.id, accountId);
+        console.error("Failed to store stripe_account_id:", storeError);
+        return NextResponse.json({ error: "Failed to store account ID" }, { status: 500 });
       }
-
+      
+      console.log("Successfully stored stripe_account_id:", updateData);
       console.log("Created Stripe Account for user:", authUser.id, accountId, "- proceeding with onboarding");
     }
 
