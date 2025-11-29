@@ -54,9 +54,20 @@ export async function POST(req: Request) {
 
       accountId = acct.id;
 
-      // DON'T store the account ID yet - wait for webhook to confirm onboarding completion
-      // This prevents the issue where users start onboarding but never complete it
-      console.log("Created Stripe Account for user:", authUser.id, accountId, "- awaiting onboarding completion");
+      // Store the account ID immediately so user can start using it
+      // The webhook will verify completion later
+      const { error: storeError } = await supabaseAdmin
+        .from("users")
+        .update({ stripe_account_id: accountId })
+        .eq("id", authUser.id);
+
+      if (storeError) {
+        console.error("Error storing initial stripe_account_id:", storeError);
+      } else {
+        console.log("Stored initial stripe_account_id for user:", authUser.id, accountId);
+      }
+
+      console.log("Created Stripe Account for user:", authUser.id, accountId, "- proceeding with onboarding");
     }
 
     // Build origin-based URLs for Stripe onboarding
