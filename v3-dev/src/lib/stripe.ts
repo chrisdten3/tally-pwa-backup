@@ -194,13 +194,16 @@ export async function createDirectTransferWithFee({
 }) {
   const secret = getSecret();
   
-  // Create a direct transfer to the connected account with application fee
-  // The application fee is automatically deducted and goes to the platform
+  // Create a direct transfer to the connected account
+  // NOTE: Transfers API does NOT support application_fee_amount parameter
+  // The platform fee is handled by transferring only the NET amount
+  // Platform fee stays in the platform's Stripe balance
+  const netAmountCents = amountCents - applicationFeeCents;
+  
   const transferBody = new URLSearchParams();
-  transferBody.append("amount", String(amountCents));
+  transferBody.append("amount", String(netAmountCents));
   transferBody.append("currency", currency);
   transferBody.append("destination", stripeAccountId);
-  transferBody.append("application_fee_amount", String(applicationFeeCents));
   if (description) transferBody.append("description", description);
 
   const transferRes = await fetch(`${STRIPE_BASE}/v1/transfers`, {
@@ -219,15 +222,15 @@ export async function createDirectTransferWithFee({
   }
 
   // Return transfer info - money goes directly to connected account
-  // The connected account will receive (amountCents - applicationFeeCents)
-  // Platform automatically receives applicationFeeCents
+  // The connected account receives netAmountCents
+  // Platform keeps applicationFeeCents in platform balance
   return {
     transfer,
     id: transfer.id,
     status: transfer.status,
     destination: transfer.destination,
     amount: transfer.amount,
-    application_fee: transfer.application_fee_amount,
+    application_fee: applicationFeeCents, // Track the fee we kept
   };
 }
 
