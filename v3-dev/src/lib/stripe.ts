@@ -205,6 +205,7 @@ export async function createDirectTransferWithFee({
   transferBody.append("currency", currency);
   transferBody.append("destination", stripeAccountId);
   if (description) transferBody.append("description", description);
+  console.log("[Stripe Debug] transferBody:", transferBody.toString());
 
   const transferRes = await fetch(`${STRIPE_BASE}/v1/transfers`, {
     method: "POST",
