@@ -102,7 +102,7 @@ function SignupForm() {
           {loading ? "Creating..." : "Create account"}
         </Button>
 
-        <div className="relative my-2">
+        {/* <div className="relative my-2">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-zinc-300"></div>
           </div>
@@ -133,7 +133,7 @@ function SignupForm() {
             />
           </svg>
           {googleLoading ? "Loading..." : "Sign up with Google"}
-        </button>
+        </button> */}
 
         <div className="text-center text-sm text-zinc-500">
           Already have an account?{" "}
