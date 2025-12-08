@@ -18,9 +18,38 @@ import {
 } from "lucide-react";
 import { supabaseClient } from "../lib/supabase";
 
-// Single-file landing page for Tally
-// Drop this into a Next.js / React route and style with TailwindCSS.
-// No external design system required; icons via lucide-react, animations via framer-motion.
+const testimonials = [
+  {
+    name: "MSB Tech Center",
+    quote:
+      "Tally finally gave us a clean, reliable way to track payments for social events. We used to juggle spreadsheets—now it’s all automatic.",
+    author: "Sophia Pezeshkan",
+    role: "President",
+  },
+  {
+    name: "Georgetown Club Volleyball",
+    quote:
+      "We’ve never had dues collection run this smoothly. Tally’s reminders and payment links boosted our on-time payments more than any system we’ve tried.",
+    author: "Allie Stevens",
+    role: "Captain",
+  },
+  {
+    name: "Virginia Case Club",
+    quote:
+      "As a consulting and case-prep organization, efficiency is everything. Tally removes all the admin burden so we can focus on training our members.",
+    author: "Tanish Gupta",
+    role: "President",
+  },
+  {
+    name: "The Hoya",
+    quote:
+      "Managing finances across multiple sections used to be chaos. Tally gives us one dashboard, full visibility, and fewer missed payments. Total upgrade for a student-run newsroom.",
+    author: "Jack Willis",
+    role: "Executive Editor",
+  },
+];
+
+
 
 const features = [
   {
@@ -566,23 +595,34 @@ export default function TallyLandingPage() {
   </p>
 
   <div className="relative mt-10 overflow-hidden">
-    <div 
+    <div
       className="flex gap-6"
       style={{
-        animation: 'scroll-infinite 30s linear infinite',
-        willChange: 'transform'
+        animation: "scroll-infinite 30s linear infinite",
+        willChange: "transform",
       }}
     >
       {[...Array(4)].map((_, setIndex) => (
         <React.Fragment key={setIndex}>
-          {["Georgetown Ventures", "Hoyalytics", "Hoya Developers", "MSB Tech Center"].map((name) => (
+          {testimonials.map((testimonial) => (
             <div
-              key={`${setIndex}-${name}`}
-              className="group flex h-32 w-64 shrink-0 items-center justify-center rounded-2xl border border-border bg-prussian-blue/40 p-6 transition hover:bg-prussian-blue/60"
+              key={`${setIndex}-${testimonial.name}`}
+              className="group flex h-auto w-80 shrink-0 flex-col justify-between rounded-2xl border border-border bg-prussian-blue/40 p-6 transition hover:bg-prussian-blue/60"
             >
-              <span className="text-lg font-semibold text-soft-white transition-transform duration-300 group-hover:scale-105">
-                {name}
-              </span>
+              <div>
+                <div className="mb-4 text-2xl text-bright-indigo">&ldquo;</div>
+                <p className="text-base leading-relaxed text-soft-white">
+                  {testimonial.quote}
+                </p>
+              </div>
+              <div className="mt-6 border-t border-border pt-4">
+                <p className="font-semibold text-soft-white">
+                  {testimonial.author}
+                </p>
+                <p className="text-sm text-cool-gray">
+                  {testimonial.role}, {testimonial.name}
+                </p>
+              </div>
             </div>
           ))}
         </React.Fragment>
