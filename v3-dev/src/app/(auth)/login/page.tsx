@@ -80,7 +80,7 @@ function LoginForm() {
           {loading ? "Loading..." : "Sign in"}
         </Button>
 
-        {/* <div className="relative my-2">
+        <div className="relative my-2">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-zinc-300"></div>
           </div>
@@ -111,7 +111,7 @@ function LoginForm() {
             />
           </svg>
           {googleLoading ? "Loading..." : "Continue with Google"}
-        </button> */}
+        </button> 
 
         <div className="text-center text-sm text-zinc-500">
           Don&apos;t have an account?{" "}
